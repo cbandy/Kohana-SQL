@@ -289,4 +289,14 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 		$this->assertSame($conditions, $conditions->pop());
 		$this->assertSame('', $db->quote($conditions));
 	}
+
+	/**
+	 * @covers  SQL_Conditions_Stack::pop
+	 */
+	public function test_pop_empty()
+	{
+		$conditions = new SQL_Conditions_Stack;
+
+		$this->assertSame($conditions, $conditions->pop());
+	}
 }

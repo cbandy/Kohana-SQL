@@ -16,7 +16,7 @@ class SQL_Conditions_Stack extends SQL_Conditions
 	 * @var array   List of tuples containing the expression length, number of
 	 *     parameters and, optionally, the content of an open() operation
 	 */
-	protected $_values;
+	protected $_values = array();
 
 	/**
 	 * Push the current expression state onto the stack.
