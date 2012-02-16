@@ -13,95 +13,105 @@
 class SQL_Conditions_Stack extends SQL_Conditions
 {
 	/**
-	 * @var array List of tuples containing the expression length, number of
+	 * @var array   List of tuples containing the expression length, number of
 	 *     parameters and, optionally, the content of an open() operation
 	 */
 	protected $_values;
 
-	public function add($logic, $left, $operator = NULL, $right = NULL)
+	/**
+	 * Push the current expression state onto the stack.
+	 *
+	 * @param   string  $open   Content of an open() operation that should be
+	 *     restored during pop()
+	 * @return  void
+	 */
+	protected function _push($open)
 	{
 		$this->_values[] = array(
 			strlen($this->_value),
 			count($this->parameters),
-			NULL,
+			$open,
 		);
+	}
+
+	public function add($logic, $left, $operator = NULL, $right = NULL)
+	{
+		$this->_push(NULL);
 
 		return parent::add($logic, $left, $operator, $right);
 	}
 
 	public function exists($logic, $query)
 	{
-		$this->_values[] = array(
-			strlen($this->_value),
-			count($this->parameters),
-			NULL,
-		);
+		$this->_push(NULL);
 
 		return parent::exists($logic, $query);
 	}
 
 	public function not($logic, $left, $operator = NULL, $right = NULL)
 	{
-		$this->_values[] = array(
-			strlen($this->_value),
-			count($this->parameters),
-			NULL,
-		);
+		$this->_push(NULL);
 
 		return parent::not($logic, $left, $operator, $right);
 	}
 
 	public function not_exists($logic, $query)
 	{
-		$this->_values[] = array(
-			strlen($this->_value),
-			count($this->parameters),
-			NULL,
-		);
+		$this->_push(NULL);
 
 		return parent::not_exists($logic, $query);
 	}
 
+	/**
+	 * Open a negated parenthesis using a logical operator when necessary,
+	 * optionally adding another condition.
+	 *
+	 * [!!] When adding another condition this way, two pops() are needed to
+	 *      remove the open parenthesis
+	 *
+	 * @param   string  $logic      Logical operator
+	 * @param   mixed   $left       Left operand
+	 * @param   string  $operator   Comparison operator
+	 * @param   mixed   $right      Right operand
+	 * @return  $this
+	 */
 	public function not_open($logic, $left = NULL, $operator = NULL, $right = NULL)
 	{
-		$this->_values[] = array(
-			strlen($this->_value),
-			count($this->parameters),
-			NULL,
-		);
+		$this->_push(NULL);
 
 		return parent::not_open($logic, $left, $operator, $right);
 	}
 
+	/**
+	 * Open a parenthesis using a logical operator when necessary, optionally
+	 * adding another condition.
+	 *
+	 * [!!] When adding another condition this way, two pops() are needed to
+	 *      remove the open parenthesis
+	 *
+	 * @param   string  $logic      Logical operator
+	 * @param   mixed   $left       Left operand
+	 * @param   string  $operator   Comparison operator
+	 * @param   mixed   $right      Right operand
+	 * @return  $this
+	 */
 	public function open($logic, $left = NULL, $operator = NULL, $right = NULL)
 	{
-		$this->_values[] = array(
-			strlen($this->_value),
-			count($this->parameters),
-			NULL,
-		);
+		$this->_push(NULL);
 
 		return parent::open($logic, $left, $operator, $right);
 	}
 
 	public function close()
 	{
-		$this->_values[] = array(
-			strlen($this->_value),
-			count($this->parameters),
-			NULL,
-		);
+		$this->_push(NULL);
 
 		return parent::close();
 	}
 
 	public function close_empty()
 	{
-		$this->_values[] = array(
-			strlen($this->_value),
-			count($this->parameters),
-			$this->_empty ? $this->_open : NULL,
-		);
+		$this->_push($this->_empty ? $this->_open : NULL);
 
 		return parent::close_empty();
 	}

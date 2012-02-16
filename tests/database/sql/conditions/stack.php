@@ -9,8 +9,7 @@
 class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 {
 	/**
-	 * @covers  SQL_Conditions_Stack::add
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_add()
 	{
@@ -31,7 +30,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_add_between()
 	{
@@ -47,7 +46,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_add_in()
 	{
@@ -63,8 +62,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::close
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_close()
 	{
@@ -126,8 +124,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::close_empty
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 *
 	 * @dataProvider    provider_close_empty
 	 *
@@ -147,8 +144,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::exists
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_exists()
 	{
@@ -169,8 +165,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::not
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_not()
 	{
@@ -191,8 +186,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::not_exists
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_not_exists()
 	{
@@ -213,8 +207,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::not_open
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_not_open()
 	{
@@ -256,8 +249,7 @@ class Database_SQL_Conditions_Stack_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Conditions_Stack::open
-	 * @covers  SQL_Conditions_Stack::pop
+	 * @covers  SQL_Conditions_Stack
 	 */
 	public function test_open()
 	{
