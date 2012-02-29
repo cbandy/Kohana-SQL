@@ -744,7 +744,7 @@ class Database_MySQL extends Database
 	{
 		if ( ! $schema)
 		{
-			// Use default schema
+			// Use configured default schema
 			$schema = $this->_config['connection']['database'];
 		}
 		else
@@ -819,7 +819,7 @@ class Database_MySQL extends Database
 
 		if ( ! $schema = $table->namespace)
 		{
-			// Use default schema
+			// Use configured default schema
 			$schema = $this->_config['connection']['database'];
 		}
 

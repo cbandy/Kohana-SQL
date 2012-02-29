@@ -1355,7 +1355,7 @@ class Database_PostgreSQL extends Database implements Database_iEscape, Database
 		}
 		else
 		{
-			// Use current schema
+			// Use current default schema
 			$sql .= 'current_schema()';
 		}
 
