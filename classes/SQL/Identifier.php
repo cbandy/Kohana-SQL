@@ -1,21 +1,22 @@
 <?php
+namespace SQL;
 
 /**
  * The name of an object in the database, such as a column, constraint, index
  * or table.
  *
- * Use the more specific [SQL_Table] and [SQL_Column] for tables and columns,
+ * Use the more specific [Table] and [Column] for tables and columns,
  * respectively.
  *
- * @package     RealDatabase
+ * @package     SQL
  *
  * @author      Chris Bandy
- * @copyright   (c) 2010 Chris Bandy
+ * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  *
- * @see SQL::quote_identifier()
+ * @see Compiler::quote_identifier()
  */
-class SQL_Identifier
+class Identifier
 {
 	/**
 	 * @var string
@@ -23,7 +24,7 @@ class SQL_Identifier
 	public $name;
 
 	/**
-	 * @var array|string|SQL_Identifier
+	 * @var array|string|Identifier
 	 */
 	public $namespace;
 

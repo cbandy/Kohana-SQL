@@ -1,18 +1,19 @@
 <?php
+namespace SQL;
 
 /**
  * Table identifier. When quoted, the configured table prefix is added.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @category    Identifiers
  *
  * @author      Chris Bandy
- * @copyright   (c) 2010 Chris Bandy
+ * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  *
- * @see SQL::quote_table()
+ * @see Compiler::quote_table()
  */
-class SQL_Table extends SQL_Identifier
+class Table extends Identifier
 {
 
 }

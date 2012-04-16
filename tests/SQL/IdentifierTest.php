@@ -1,18 +1,17 @@
 <?php
+namespace SQL;
+
 /**
  * @package RealDatabase
  * @author  Chris Bandy
- *
- * @group   database
- * @group   database.identifiers
  */
-class Database_SQL_Identifier_Test extends PHPUnit_Framework_TestCase
+class IdentifierTest extends \PHPUnit_Framework_TestCase
 {
 	public function provider_constructor()
 	{
-		$a = new stdClass;
-		$b = new stdClass;
-		$c = new stdClass;
+		$a = new \stdClass;
+		$b = new \stdClass;
+		$c = new \stdClass;
 
 		return array(
 			array('', '', array()),
@@ -30,7 +29,8 @@ class Database_SQL_Identifier_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL_Identifier::__construct
+	 * @covers  SQL\Identifier::__construct
+	 *
 	 * @dataProvider    provider_constructor
 	 *
 	 * @param   array|string    $argument   Argument to the constructor
@@ -39,7 +39,7 @@ class Database_SQL_Identifier_Test extends PHPUnit_Framework_TestCase
 	 */
 	public function test_constructor($argument, $name, $namespace)
 	{
-		$identifier = new SQL_Identifier($argument);
+		$identifier = new Identifier($argument);
 
 		$this->assertSame($name, $identifier->name);
 		$this->assertSame($namespace, $identifier->namespace);
