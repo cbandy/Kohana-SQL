@@ -1,26 +1,27 @@
 <?php
+namespace SQL;
 
 /**
  * Expression for building and combining predicates.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @category    Expressions
  *
  * @author      Chris Bandy
- * @copyright   (c) 2010 Chris Bandy
+ * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  */
-class SQL_Conditions extends SQL_Expression
+class Conditions extends Expression
 {
 	/**
 	 * @var bool    Whether or not the (sub)expression has just begun
 	 */
-	protected $_empty = TRUE;
+	protected $empty = TRUE;
 
 	/**
 	 * @var string  The content of the previous open() operation
 	 */
-	protected $_open = '';
+	protected $open = '';
 
 	/**
 	 * @param   mixed   $left       Left operand
@@ -38,23 +39,52 @@ class SQL_Conditions extends SQL_Expression
 	}
 
 	/**
+	 * Add a condition using a logical operator when necessary.
+	 *
+	 * @param   string  $logic      Logical operator
+	 * @param   mixed   $left       Left operand
+	 * @param   string  $operator   Comparison operator
+	 * @param   mixed   $right      Right operand
+	 * @return  $this
+	 */
+	public function add($logic, $left, $operator = NULL, $right = NULL)
+	{
+		if ( ! $this->empty)
+		{
+			// Only append the logical operator between conditions
+			$this->value .= ' '.strtoupper($logic).' ';
+		}
+
+		$this->empty = FALSE;
+		$this->parameters[] = $left;
+		$this->value .= '?';
+
+		if ($operator)
+		{
+			$this->add_rhs($operator, $right);
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Append an operator and process its right operand.
 	 *
 	 * @param   string  $operator   Comparison operator
 	 * @param   mixed   $right      Right operand
 	 * @return  void
 	 */
-	protected function _add_rhs($operator, $right)
+	protected function add_rhs($operator, $right)
 	{
 		// SQL operators are always uppercase
 		$operator = strtoupper($operator);
 
-		$this->_value .= ' '.$operator.' ';
+		$this->value .= ' '.$operator.' ';
 
 		if ($operator === 'IN')
 		{
 			$this->parameters[] = $right;
-			$this->_value .= '(?)';
+			$this->value .= '(?)';
 		}
 		elseif ($operator === 'BETWEEN' AND is_array($right))
 		{
@@ -63,12 +93,12 @@ class SQL_Conditions extends SQL_Expression
 
 			$this->parameters[] = $min;
 			$this->parameters[] = $max;
-			$this->_value .= '? AND ?';
+			$this->value .= '? AND ?';
 		}
 		else
 		{
 			$this->parameters[] = $right;
-			$this->_value .= '?';
+			$this->value .= '?';
 		}
 	}
 
@@ -81,63 +111,34 @@ class SQL_Conditions extends SQL_Expression
 	 * @param   string  $placeholder    Text to use for the positional placeholder
 	 * @return  void
 	 */
-	protected function _add_unary($logic, $operator, $operand, $placeholder = '?')
+	protected function add_unary($logic, $operator, $operand, $placeholder)
 	{
-		if ( ! $this->_empty)
+		if ( ! $this->empty)
 		{
 			// Only append the logical operator between conditions
-			$this->_value .= ' '.strtoupper($logic).' ';
+			$this->value .= ' '.strtoupper($logic).' ';
 		}
 
-		$this->_empty = FALSE;
-		$this->_value .= $operator.' '.$placeholder;
+		$this->empty = FALSE;
 		$this->parameters[] = $operand;
-	}
-
-	/**
-	 * Add a condition using a logical operator when necessary.
-	 *
-	 * @param   string  $logic      Logical operator
-	 * @param   mixed   $left       Left operand
-	 * @param   string  $operator   Comparison operator
-	 * @param   mixed   $right      Right operand
-	 * @return  $this
-	 */
-	public function add($logic, $left, $operator = NULL, $right = NULL)
-	{
-		if ( ! $this->_empty)
-		{
-			// Only append the logical operator between conditions
-			$this->_value .= ' '.strtoupper($logic).' ';
-		}
-
-		$this->_empty = FALSE;
-		$this->parameters[] = $left;
-		$this->_value .= '?';
-
-		if ($operator)
-		{
-			$this->_add_rhs($operator, $right);
-		}
-
-		return $this;
+		$this->value .= $operator.' '.$placeholder;
 	}
 
 	/**
 	 * Add a condition while converting the LHS to a column.
 	 *
-	 * @param   string                                      $logic          Logical operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   string                              $logic          Logical operator
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function column($logic, $left_column, $operator, $right)
 	{
-		if ( ! $left_column instanceof SQL_Expression
-			AND ! $left_column instanceof SQL_Identifier)
+		if ( ! $left_column instanceof Expression
+			AND ! $left_column instanceof Identifier)
 		{
-			$left_column = new SQL_Column($left_column);
+			$left_column = new Column($left_column);
 		}
 
 		return $this->add($logic, $left_column, $operator, $right);
@@ -146,18 +147,18 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a condition while converting both operands to columns.
 	 *
-	 * @param   string                                      $logic          Logical operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   string                              $logic          Logical operator
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function columns($logic, $left_column, $operator, $right_column)
 	{
-		if ( ! $right_column instanceof SQL_Expression
-			AND ! $right_column instanceof SQL_Identifier)
+		if ( ! $right_column instanceof Expression
+			AND ! $right_column instanceof Identifier)
 		{
-			$right_column = new SQL_Column($right_column);
+			$right_column = new Column($right_column);
 		}
 
 		return $this->column($logic, $left_column, $operator, $right_column);
@@ -167,17 +168,17 @@ class SQL_Conditions extends SQL_Expression
 	 * Add an EXISTS condition.
 	 *
 	 * @param   string  $logic  Logical operator
-	 * @param   mixed   $query  Converted to SQL_Expression
+	 * @param   mixed   $query  Converted to Expression
 	 * @return  $this
 	 */
 	public function exists($logic, $query)
 	{
-		if ( ! $query instanceof SQL_Expression)
+		if ( ! $query instanceof Expression)
 		{
-			$query = new SQL_Expression($query);
+			$query = new Expression($query);
 		}
 
-		$this->_add_unary($logic, 'EXISTS', $query, '(?)');
+		$this->add_unary($logic, 'EXISTS', $query, '(?)');
 
 		return $this;
 	}
@@ -193,19 +194,19 @@ class SQL_Conditions extends SQL_Expression
 	 */
 	public function not($logic, $left, $operator = NULL, $right = NULL)
 	{
-		if ( ! $this->_empty)
+		if ( ! $this->empty)
 		{
 			// Only append the logical operator between conditions
-			$this->_value .= ' '.strtoupper($logic).' ';
+			$this->value .= ' '.strtoupper($logic).' ';
 		}
 
-		$this->_empty = FALSE;
+		$this->empty = FALSE;
 		$this->parameters[] = $left;
-		$this->_value .= 'NOT ?';
+		$this->value .= 'NOT ?';
 
 		if ($operator)
 		{
-			$this->_add_rhs($operator, $right);
+			$this->add_rhs($operator, $right);
 		}
 
 		return $this;
@@ -214,18 +215,18 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a negated condition while converting the LHS to a column.
 	 *
-	 * @param   string                                      $logic          Logical operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   string                              $logic          Logical operator
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function not_column($logic, $left_column, $operator, $right)
 	{
-		if ( ! $left_column instanceof SQL_Expression
-			AND ! $left_column instanceof SQL_Identifier)
+		if ( ! $left_column instanceof Expression
+			AND ! $left_column instanceof Identifier)
 		{
-			$left_column = new SQL_Column($left_column);
+			$left_column = new Column($left_column);
 		}
 
 		return $this->not($logic, $left_column, $operator, $right);
@@ -234,18 +235,18 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a negated condition while converting both operands to columns.
 	 *
-	 * @param   string                                      $logic          Logical operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   string                              $logic          Logical operator
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function not_columns($logic, $left_column, $operator, $right_column)
 	{
-		if ( ! $right_column instanceof SQL_Expression
-			AND ! $right_column instanceof SQL_Identifier)
+		if ( ! $right_column instanceof Expression
+			AND ! $right_column instanceof Identifier)
 		{
-			$right_column = new SQL_Column($right_column);
+			$right_column = new Column($right_column);
 		}
 
 		return $this->not_column($logic, $left_column, $operator, $right_column);
@@ -255,17 +256,17 @@ class SQL_Conditions extends SQL_Expression
 	 * Add a NOT EXISTS condition.
 	 *
 	 * @param   string  $logic  Logical operator
-	 * @param   mixed   $query  Converted to SQL_Expression
+	 * @param   mixed   $query  Converted to Expression
 	 * @return  $this
 	 */
 	public function not_exists($logic, $query)
 	{
-		if ( ! $query instanceof SQL_Expression)
+		if ( ! $query instanceof Expression)
 		{
-			$query = new SQL_Expression($query);
+			$query = new Expression($query);
 		}
 
-		$this->_add_unary($logic, 'NOT EXISTS', $query, '(?)');
+		$this->add_unary($logic, 'NOT EXISTS', $query, '(?)');
 
 		return $this;
 	}
@@ -282,16 +283,16 @@ class SQL_Conditions extends SQL_Expression
 	 */
 	public function not_open($logic, $left = NULL, $operator = NULL, $right = NULL)
 	{
-		$this->_open = 'NOT (';
+		$this->open = 'NOT (';
 
-		if ( ! $this->_empty)
+		if ( ! $this->empty)
 		{
 			// Only append the logical operator between conditions
-			$this->_open = ' '.strtoupper($logic).' '.$this->_open;
+			$this->open = ' '.strtoupper($logic).' '.$this->open;
 		}
 
-		$this->_empty = TRUE;
-		$this->_value .= $this->_open;
+		$this->empty = TRUE;
+		$this->value .= $this->open;
 
 		if ($left !== NULL OR $operator !== NULL)
 		{
@@ -304,18 +305,18 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a negated parenthesis while converting the LHS to a column.
 	 *
-	 * @param   string                                      $logic          Logical operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   string                              $logic          Logical operator
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function not_open_column($logic, $left_column, $operator, $right)
 	{
-		if ( ! $left_column instanceof SQL_Expression
-			AND ! $left_column instanceof SQL_Identifier)
+		if ( ! $left_column instanceof Expression
+			AND ! $left_column instanceof Identifier)
 		{
-			$left_column = new SQL_Column($left_column);
+			$left_column = new Column($left_column);
 		}
 
 		return $this->not_open($logic, $left_column, $operator, $right);
@@ -324,18 +325,18 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a negated parenthesis while converting both operands to columns.
 	 *
-	 * @param   string                                      $logic          Logical operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   string                              $logic          Logical operator
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function not_open_columns($logic, $left_column, $operator, $right_column)
 	{
-		if ( ! $right_column instanceof SQL_Expression
-			AND ! $right_column instanceof SQL_Identifier)
+		if ( ! $right_column instanceof Expression
+			AND ! $right_column instanceof Identifier)
 		{
-			$right_column = new SQL_Column($right_column);
+			$right_column = new Column($right_column);
 		}
 
 		return $this->not_open_column($logic, $left_column, $operator, $right_column);
@@ -353,16 +354,16 @@ class SQL_Conditions extends SQL_Expression
 	 */
 	public function open($logic, $left = NULL, $operator = NULL, $right = NULL)
 	{
-		$this->_open = '(';
+		$this->open = '(';
 
-		if ( ! $this->_empty)
+		if ( ! $this->empty)
 		{
 			// Only append the logical operator between conditions
-			$this->_open = ' '.strtoupper($logic).' '.$this->_open;
+			$this->open = ' '.strtoupper($logic).' '.$this->open;
 		}
 
-		$this->_empty = TRUE;
-		$this->_value .= $this->_open;
+		$this->empty = TRUE;
+		$this->value .= $this->open;
 
 		if ($left !== NULL OR $operator !== NULL)
 		{
@@ -375,18 +376,18 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a parenthesis while converting the LHS to a column.
 	 *
-	 * @param   string                                      $logic          Logical operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   string                              $logic          Logical operator
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function open_column($logic, $left_column, $operator, $right)
 	{
-		if ( ! $left_column instanceof SQL_Expression
-			AND ! $left_column instanceof SQL_Identifier)
+		if ( ! $left_column instanceof Expression
+			AND ! $left_column instanceof Identifier)
 		{
-			$left_column = new SQL_Column($left_column);
+			$left_column = new Column($left_column);
 		}
 
 		return $this->open($logic, $left_column, $operator, $right);
@@ -395,32 +396,32 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a parenthesis while converting both operands to columns.
 	 *
-	 * @param   string                                      $logic          Logical operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   string                              $logic          Logical operator
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function open_columns($logic, $left_column, $operator, $right_column)
 	{
-		if ( ! $right_column instanceof SQL_Expression
-			AND ! $right_column instanceof SQL_Identifier)
+		if ( ! $right_column instanceof Expression
+			AND ! $right_column instanceof Identifier)
 		{
-			$right_column = new SQL_Column($right_column);
+			$right_column = new Column($right_column);
 		}
 
 		return $this->open_column($logic, $left_column, $operator, $right_column);
 	}
 
 	/**
-	 * Close parenthesis
+	 * Close parenthesis.
 	 *
 	 * @return  $this
 	 */
 	public function close()
 	{
-		$this->_empty = FALSE;
-		$this->_value .= ')';
+		$this->empty = FALSE;
+		$this->value .= ')';
 
 		return $this;
 	}
@@ -433,15 +434,15 @@ class SQL_Conditions extends SQL_Expression
 	 */
 	public function close_empty()
 	{
-		if ( ! $this->_empty)
+		if ( ! $this->empty)
 			return $this->close();
 
 		// Remove the previous open parenthesis
-		$this->_value = substr($this->_value, 0, - strlen($this->_open));
+		$this->value = substr($this->value, 0, - strlen($this->open));
 
-		$this->_empty = (
+		$this->empty = (
 			// The expression is empty or a subexpression has just begun
-			! $this->_value OR substr_compare($this->_value, '(', -1) === 0
+			! $this->value OR substr_compare($this->value, '(', -1) === 0
 		);
 
 		return $this;
@@ -453,9 +454,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a condition using AND while converting the LHS to a column.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function and_column($left_column, $operator, $right)
@@ -466,9 +467,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a condition using AND while converting both operands to columns.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function and_columns($left_column, $operator, $right_column)
@@ -479,7 +480,7 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add an EXISTS condition using AND.
 	 *
-	 * @param   mixed   $query  Converted to SQL_Expression
+	 * @param   mixed   $query  Converted to Expression
 	 * @return  $this
 	 */
 	public function and_exists($query)
@@ -503,9 +504,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a negated condition using AND while converting the LHS to a column.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function and_not_column($left_column, $operator, $right)
@@ -517,9 +518,9 @@ class SQL_Conditions extends SQL_Expression
 	 * Add a negated condition using AND while converting both operands to
 	 * columns.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function and_not_columns($left_column, $operator, $right_column)
@@ -530,7 +531,7 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a NOT EXISTS condition using AND.
 	 *
-	 * @param   mixed   $query  Converted to SQL_Expression
+	 * @param   mixed   $query  Converted to Expression
 	 * @return  $this
 	 */
 	public function and_not_exists($query)
@@ -556,9 +557,9 @@ class SQL_Conditions extends SQL_Expression
 	 * Open a negated parenthesis using AND while converting the LHS to a
 	 * column.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function and_not_open_column($left_column, $operator, $right)
@@ -570,9 +571,9 @@ class SQL_Conditions extends SQL_Expression
 	 * Open a negated parenthesis using AND while converting both operands to
 	 * columns.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function and_not_open_columns($left_column, $operator, $right_column)
@@ -596,9 +597,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a parenthesis using AND while converting the LHS to a column.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function and_open_column($left_column, $operator, $right)
@@ -609,9 +610,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a parenthesis using AND while converting both operands to columns.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function and_open_columns($left_column, $operator, $right_column)
@@ -622,9 +623,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a condition using OR while converting the LHS to a column.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function or_column($left_column, $operator, $right)
@@ -635,9 +636,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a condition using OR while converting both operands to columns.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function or_columns($left_column, $operator, $right_column)
@@ -648,7 +649,7 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add an EXISTS condition using OR.
 	 *
-	 * @param   mixed   $query  Converted to SQL_Expression
+	 * @param   mixed   $query  Converted to Expression
 	 * @return  $this
 	 */
 	public function or_exists($query)
@@ -672,9 +673,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a negated condition using OR while converting the LHS to a column.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function or_not_column($left_column, $operator, $right)
@@ -686,9 +687,9 @@ class SQL_Conditions extends SQL_Expression
 	 * Add a negated condition using OR while converting both operands to
 	 * columns.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function or_not_columns($left_column, $operator, $right_column)
@@ -699,7 +700,7 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Add a NOT EXISTS condition using OR.
 	 *
-	 * @param   mixed   $query  Converted to SQL_Expression
+	 * @param   mixed   $query  Converted to Expression
 	 * @return  $this
 	 */
 	public function or_not_exists($query)
@@ -723,9 +724,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a negated parenthesis using OR while converting the LHS to a column.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function or_not_open_column($left_column, $operator, $right)
@@ -737,9 +738,9 @@ class SQL_Conditions extends SQL_Expression
 	 * Open a negated parenthesis using OR while converting both operands to
 	 * columns.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function or_not_open_columns($left_column, $operator, $right_column)
@@ -763,9 +764,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a parenthesis using OR while converting the LHS to a column.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   mixed                                       $right          Right operand
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   mixed                               $right          Right operand
 	 * @return  $this
 	 */
 	public function or_open_column($left_column, $operator, $right)
@@ -776,9 +777,9 @@ class SQL_Conditions extends SQL_Expression
 	/**
 	 * Open a parenthesis using OR while converting both operands to columns.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $left_column    Left operand, converted to SQL_Column
-	 * @param   string                                      $operator       Comparison operator
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $right_column   Right operand, converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $left_column    Left operand, converted to Column
+	 * @param   string                              $operator       Comparison operator
+	 * @param   array|string|Expression|Identifier  $right_column   Right operand, converted to Column
 	 * @return  $this
 	 */
 	public function or_open_columns($left_column, $operator, $right_column)
