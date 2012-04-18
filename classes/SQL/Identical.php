@@ -1,4 +1,5 @@
 <?php
+namespace SQL;
 
 /**
  * Null-safe equality comparator. Similar to = and <> except it does not yield
@@ -8,14 +9,14 @@
  * operands are equal or null. Otherwise, this comparator yields true when the
  * operands are not equal or one of them is null.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @category    Expressions
  *
  * @author      Chris Bandy
- * @copyright   (c) 2011 Chris Bandy
+ * @copyright   (c) 2011-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  */
-class SQL_Identical extends SQL_Expression
+class Identical extends Expression
 {
 	/**
 	 * @param   mixed   $left       Left operand
@@ -34,7 +35,7 @@ class SQL_Identical extends SQL_Expression
 		$comparison = '(:left <> :right OR :left IS NULL OR :right IS NULL)';
 		$null = '(:left IS NULL AND :right IS NULL)';
 
-		return ($this->_value === '=')
+		return ($this->value === '=')
 			? ('(NOT '.$comparison.' OR '.$null.')')
 			: ('('.$comparison.' AND NOT '.$null.')');
 	}
