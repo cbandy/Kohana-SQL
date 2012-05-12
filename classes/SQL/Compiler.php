@@ -55,104 +55,6 @@ class Compiler
 	}
 
 	/**
-	 * Recursively replace array, [Expression] and [Identifier] parameters
-	 * until all parameters are positional literals.
-	 *
-	 * @param   string  $statement          SQL statement with (or without)
-	 *     placeholders
-	 * @param   array   $parameters         Unquoted parameters
-	 * @param   array   $result_parameters  Parameters for the resulting
-	 *     statement
-	 * @return  string  SQL statement
-	 */
-	protected function parse($statement, $parameters, &$result_parameters)
-	{
-		// Trying to maintain context between calls (and recurse) using
-		// preg_replace_callback is too complicated. Capturing the placeholder
-		// offsets allows us to iterate over a single expression and recurse
-		// using the call stack.
-		$chunks = preg_split(
-			$this->placeholder, $statement, NULL, PREG_SPLIT_OFFSET_CAPTURE
-		);
-
-		$position = 0;
-		$prev = $chunks[0];
-		$result = $prev[0];
-
-		for ($i = 1, $max = count($chunks); $i < $max; ++$i)
-		{
-			if ($statement[$chunks[$i][1] - 1] === '?')
-			{
-				// Character before the current chunk is a question mark
-				$placeholder = $position++;
-			}
-			else
-			{
-				// End of the previous chunk
-				$offset = $prev[1] + strlen($prev[0]);
-
-				// Text between the current chunk and the previous one
-				$placeholder = substr(
-					$statement, $offset, $chunks[$i][1] - $offset
-				);
-			}
-
-			$prev = $chunks[$i];
-			$result .= $this->parse_value(
-				$parameters, $placeholder, $result_parameters
-			).$prev[0];
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Recursively expand a parameter value to an SQL fragment consisting only
-	 * of positional placeholders.
-	 *
-	 * @param   array           $array              Unquoted parameters
-	 * @param   integer|string  $key                Index of the parameter value
-	 *     to parse
-	 * @param   array           $result_parameters  Parameters for the resulting
-	 *     fragment
-	 * @return  string  SQL fragment
-	 */
-	protected function parse_value($array, $key, &$result_parameters)
-	{
-		$value = $array[$key];
-
-		if (is_array($value))
-		{
-			if (empty($value))
-				return '';
-
-			$result = array();
-
-			foreach ($value as $k => $v)
-			{
-				$result[] = $this->parse_value($value, $k, $result_parameters);
-			}
-
-			return implode(', ', $result);
-		}
-
-		if ($value instanceof Expression)
-		{
-			return $this->parse(
-				(string) $value, $value->parameters, $result_parameters
-			);
-		}
-
-		if ($value instanceof Identifier)
-			return $this->quote($value);
-
-		// Capture possible reference
-		$result_parameters[] =& $array[$key];
-
-		return '?';
-	}
-
-	/**
 	 * Convert a generic [Expression] into a natively parameterized
 	 * [Statement]. Parameter names are driver-specific, but the default
 	 * implementation replaces all [Expression] and [Identifier] parameters
@@ -163,13 +65,65 @@ class Compiler
 	 */
 	public function parse_statement($statement)
 	{
-		$parameters = array();
+		$compiler = $this;
+		$placeholder = $this->placeholder;
 
-		$statement = $this->parse(
-			(string) $statement, $statement->parameters, $parameters
-		);
+		$parser = array('parameters' => array());
 
-		return new Statement($statement, $parameters);
+		/**
+		 * Recursively replace array, [Expression] and [Identifier] parameters
+		 * until all parameters are positional literals.
+		 *
+		 * @param   Expression  $value
+		 * @return  string  SQL fragment
+		 */
+		$parser['expression'] = function ($value) use (&$parser, $placeholder)
+		{
+			$position = 0;
+
+			return preg_replace_callback(
+				$placeholder,
+				function ($matches) use (&$parser, &$position, $value)
+				{
+					$placeholder = ($matches[0] === '?')
+						? $position++
+						: $matches[0];
+
+					return $parser['parameter'](
+						$value->parameters[$placeholder]
+					);
+				},
+				(string) $value
+			);
+		};
+
+		/**
+		 * Recursively expand a parameter value to an SQL fragment consisting
+		 * only of positional placeholders.
+		 *
+		 * @param   mixed   $value  Unquoted parameter
+		 * @return  string  SQL fragment
+		 */
+		$parser['parameter'] = function (&$value) use ($compiler, &$parser)
+		{
+			if (is_array($value))
+				return implode(', ', array_map($parser['parameter'], $value));
+
+			if ($value instanceof Expression)
+				return $parser['expression']($value);
+
+			if ($value instanceof Identifier)
+				return $compiler->quote($value);
+
+			// Capture possible reference
+			$parser['parameters'][] =& $value;
+
+			return '?';
+		};
+
+		$result = $parser['expression']($statement);
+
+		return new Statement($result, $parser['parameters']);
 	}
 
 	/**

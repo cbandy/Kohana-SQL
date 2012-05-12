@@ -127,9 +127,7 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL\Compiler::parse
 	 * @covers  SQL\Compiler::parse_statement
-	 * @covers  SQL\Compiler::parse_value
 	 *
 	 * @dataProvider    provider_parse_statement
 	 *
@@ -144,7 +142,7 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL\Compiler::parse_value
+	 * @covers  SQL\Compiler::parse_statement
 	 */
 	public function test_parse_statement_bound()
 	{
