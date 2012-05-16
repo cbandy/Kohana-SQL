@@ -79,6 +79,10 @@ class Compiler
 		 */
 		$parser['expression'] = function ($value) use (&$parser, $placeholder)
 		{
+			// An expression without parameters is just raw SQL
+			if (empty($value->parameters))
+				return (string) $value;
+
 			$position = 0;
 
 			return preg_replace_callback(
