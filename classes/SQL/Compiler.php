@@ -85,13 +85,9 @@ class Compiler
 				$placeholder,
 				function ($matches) use (&$parser, &$position, $value)
 				{
-					$placeholder = ($matches[0] === '?')
-						? $position++
-						: $matches[0];
+					$param = ($matches[0] === '?') ? $position++ : $matches[0];
 
-					return $parser['parameter'](
-						$value->parameters[$placeholder]
-					);
+					return $parser['parameter']($value->parameters[$param]);
 				},
 				(string) $value
 			);
@@ -242,11 +238,9 @@ class Compiler
 			$this->placeholder,
 			function ($matches) use ($compiler, $parameters, &$position)
 			{
-				$placeholder = ($matches[0] === '?')
-					? $position++
-					: $matches[0];
+				$param = ($matches[0] === '?') ? $position++ : $matches[0];
 
-				return $compiler->quote($parameters[$placeholder]);
+				return $compiler->quote($parameters[$param]);
 			},
 			$value
 		);
