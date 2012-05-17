@@ -1,6 +1,5 @@
 
-Real-Database is a rewrite of the Kohana Database module that focuses on
-query building and support for multiple database backends.
+Kohana\SQL is a library for writing and executing SQL.
 
-For a quick overview, read the *Introduction* in the guide.
+It is currently being ported from https://github.com/cbandy/real-database
 
