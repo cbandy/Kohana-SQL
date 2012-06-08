@@ -4,7 +4,8 @@ namespace SQL;
 /**
  * Expression for building one or more row values.
  *
- * [!!] MySQL only allows this in INSERT statements
+ * [!!] MySQL and SQLite only allow this in INSERT statements
+ * [!!] SQLite allows only one row with this syntax
  *
  * @package     SQL
  * @category    Queries
@@ -15,6 +16,7 @@ namespace SQL;
  *
  * @link http://dev.mysql.com/doc/en/insert.html MySQL
  * @link http://www.postgresql.org/docs/current/static/sql-values.html PostgreSQL
+ * @link http://www.sqlite.org/lang_insert.html SQLite
  * @link http://msdn.microsoft.com/library/dd776382.aspx Transact-SQL
  */
 class Values extends Expression
