@@ -66,8 +66,6 @@ class Compiler
 	public function parse_statement($statement)
 	{
 		$compiler = $this;
-		$placeholder = $this->placeholder;
-
 		$parser = array('parameters' => array());
 
 		/**
@@ -77,7 +75,7 @@ class Compiler
 		 * @param   Expression  $value
 		 * @return  string  SQL fragment
 		 */
-		$parser['expression'] = function ($value) use (&$parser, $placeholder)
+		$parser['expression'] = function ($value) use ($compiler, &$parser)
 		{
 			// An expression without parameters is just raw SQL
 			if (empty($value->parameters))
@@ -86,7 +84,7 @@ class Compiler
 			$position = 0;
 
 			return preg_replace_callback(
-				$placeholder,
+				$compiler->placeholder,
 				function ($matches) use (&$parser, &$position, $value)
 				{
 					$param = ($matches[0] === '?') ? $position++ : $matches[0];
