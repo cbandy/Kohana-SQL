@@ -380,7 +380,7 @@ class UpdateTest extends \PHPUnit_Framework_TestCase
 	 *
 	 * @dataProvider    provider_where
 	 *
-	 * @param   array       $arguments  Arguments
+	 * @param   array   $arguments  Arguments
 	 */
 	public function test_where_reset($arguments)
 	{

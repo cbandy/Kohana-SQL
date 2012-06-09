@@ -197,6 +197,25 @@ class DeleteTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
+	 * @covers  SQL\DML\Delete::where
+	 *
+	 * @dataProvider    provider_where
+	 *
+	 * @param   array   $arguments  Arguments
+	 */
+	public function test_where_reset($arguments)
+	{
+		$delete = new Delete;
+		call_user_func_array(array($delete, 'where'), $arguments);
+
+		$this->assertSame($delete, $delete->where(NULL));
+		$this->assertNull($delete->where);
+
+		$this->assertSame('DELETE FROM :table', (string) $delete);
+		$this->assertSame($this->parameters, $delete->parameters);
+	}
+
+	/**
 	 * @covers  SQL\DML\Delete::__toString
 	 */
 	public function test_toString()

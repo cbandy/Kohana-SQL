@@ -550,6 +550,25 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
+	/**
+	 * @covers  SQL\DML\Select::where
+	 *
+	 * @dataProvider    provider_where
+	 *
+	 * @param   array   $arguments  Arguments
+	 */
+	public function test_where_reset($arguments)
+	{
+		$select = new Select;
+		call_user_func_array(array($select, 'where'), $arguments);
+
+		$this->assertSame($select, $select->where(NULL));
+		$this->assertNull($select->where);
+
+		$this->assertSame('SELECT *', (string) $select);
+		$this->assertSame($this->parameters, $select->parameters);
+	}
+
 	public function provider_group_by()
 	{
 		$result[] = array(NULL, NULL, 'SELECT *', $this->parameters);
