@@ -57,8 +57,9 @@ class Compiler
 	/**
 	 * Convert a generic [Expression] into a natively parameterized
 	 * [Statement]. Parameter names are driver-specific, but the default
-	 * implementation replaces all [Expression] and [Identifier] parameters
-	 * so that the remaining parameters are a 0-indexed array of literals.
+	 * implementation replaces all [Constant], [Expression] and [Identifier]
+	 * parameters so that the remaining parameters are a 0-indexed array of
+	 * literals.
 	 *
 	 * @param   Expression  $statement  SQL statement
 	 * @return  Statement
@@ -110,7 +111,7 @@ class Compiler
 			if ($value instanceof Expression)
 				return $parser['expression']($value);
 
-			if ($value instanceof Identifier)
+			if ($value instanceof Identifier OR $value instanceof Constant)
 				return $compiler->quote($value);
 
 			// Capture possible reference
@@ -129,6 +130,7 @@ class Compiler
 	 * quote_* methods.
 	 *
 	 * @uses quote_column()
+	 * @uses quote_constant()
 	 * @uses quote_expression()
 	 * @uses quote_identifier()
 	 * @uses quote_literal()
@@ -159,6 +161,9 @@ class Compiler
 
 			if ($value instanceof Identifier)
 				return $this->quote_identifier($value);
+
+			if ($value instanceof Constant)
+				return $this->quote_constant($value);
 		}
 
 		return $this->quote_literal($value);
@@ -219,7 +224,27 @@ class Compiler
 	}
 
 	/**
+	 * Quote a value for inclusion in an SQL statement.
+	 *
+	 * @uses quote()
+	 *
+	 * @param   mixed   $value  Value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_constant($value)
+	{
+		while ($value instanceof Constant)
+		{
+			$value = $value->value;
+		}
+
+		return $this->quote($value);
+	}
+
+	/**
 	 * Quote an expression's parameters for inclusion in an SQL statement.
+	 *
+	 * @uses quote()
 	 *
 	 * @param   Expression  $value  Expression to quote
 	 * @return  string  SQL fragment

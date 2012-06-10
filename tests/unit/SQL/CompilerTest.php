@@ -121,6 +121,18 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 				new Expression(':a', array(':a' => array('b', new Table('c')))),
 				new Statement('?, "pre_c"', array('b'))
 			),
+
+			// data set #17
+			array(
+				new Expression('?', array(new Constant('a'))),
+				new Statement("'a'"),
+			),
+			array(
+				new Expression(
+					'?', array(new Constant(new Expression('?', array('a'))))
+				),
+				new Statement("'a'"),
+			),
 		);
 
 		return $result;
@@ -591,6 +603,49 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 		}
 	}
 
+	public function provider_quote_constant()
+	{
+		return array(
+			array(new Constant(NULL), 'NULL'),
+			array(new Constant(1), '1'),
+			array(new Constant('a'), "'a'"),
+
+			// data set #3
+			array(new Constant(new Expression('expr')), 'expr'),
+			array(new Constant(new Identifier('one.two')), '"one"."two"'),
+			array(new Constant(new Column('one.two')), '"pre_one"."two"'),
+			array(new Constant(new Table('one.two')), '"one"."pre_two"'),
+
+			// data set #7
+			array(new Constant(array(NULL, 1 ,'a')), "NULL, 1, 'a'"),
+
+			// data set #8
+			array(new Constant(new Constant(NULL)), 'NULL'),
+			array(new Constant(new Constant(new Expression('expr'))), 'expr'),
+			array(new Constant(new Constant(new Identifier('one'))), '"one"'),
+
+			// data set #11
+			array(NULL, 'NULL'),
+			array(1, '1'),
+			array(new Expression('expr'), 'expr'),
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_constant
+	 *
+	 * @dataProvider    provider_quote_constant
+	 *
+	 * @param   mixed   $value      Argument
+	 * @param   string  $expected
+	 */
+	public function test_quote_constant($value, $expected)
+	{
+		$compiler = new Compiler('pre_');
+
+		$this->assertSame($expected, $compiler->quote_constant($value));
+	}
+
 	public function provider_quote()
 	{
 		return array
@@ -610,6 +665,10 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 
 			// Array
 			array(array(NULL, 1 ,'a'), "NULL, 1, 'a'"),
+
+			// data set #8
+			array(new Constant(NULL), 'NULL'),
+			array(new Constant(new Expression('expr')), 'expr'),
 		);
 	}
 
