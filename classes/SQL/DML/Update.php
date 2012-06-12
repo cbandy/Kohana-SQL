@@ -37,14 +37,14 @@ class Update extends Expression
 	public $limit;
 
 	/**
+	 * @var array   List of column assignments
+	 */
+	public $set;
+
+	/**
 	 * @var Table|Alias Table in which to update rows
 	 */
 	public $table;
-
-	/**
-	 * @var array   List of column assignments
-	 */
-	public $values;
 
 	/**
 	 * @var Conditions  Search conditions
@@ -63,8 +63,8 @@ class Update extends Expression
 	{
 		$this->from     =& $this->parameters[':from'];
 		$this->limit    =& $this->parameters[':limit'];
+		$this->set      =& $this->parameters[':values'];
 		$this->table    =& $this->parameters[':table'];
-		$this->values   =& $this->parameters[':values'];
 		$this->where    =& $this->parameters[':where'];
 
 		if ($table !== NULL)
@@ -145,7 +145,7 @@ class Update extends Expression
 	{
 		if ($values === NULL)
 		{
-			$this->values = NULL;
+			$this->set = NULL;
 		}
 		else
 		{
@@ -153,7 +153,7 @@ class Update extends Expression
 			{
 				$column = new Column($column);
 
-				$this->values[] = new Expression(
+				$this->set[] = new Expression(
 					'? = ?', array($column, $value)
 				);
 			}
@@ -201,7 +201,7 @@ class Update extends Expression
 			$column = new Column($column);
 		}
 
-		$this->values[] = new Expression('? = ?', array($column, $value));
+		$this->set[] = new Expression('? = ?', array($column, $value));
 
 		return $this;
 	}

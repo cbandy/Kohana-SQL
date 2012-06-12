@@ -21,8 +21,8 @@ class UpdateTest extends \PHPUnit_Framework_TestCase
 	protected $parameters = array(
 		':from' => NULL,
 		':limit' => NULL,
-		':table' => NULL,
 		':values' => NULL,
+		':table' => NULL,
 		':where' => NULL,
 	);
 
@@ -55,21 +55,21 @@ class UpdateTest extends \PHPUnit_Framework_TestCase
 	 *
 	 * @param   array           $arguments  Arguments
 	 * @param   Table_Reference $table      Expected property
-	 * @param   array           $values     Expected property
+	 * @param   array           $set        Expected property
 	 */
-	public function test_constructor($arguments, $table, $values)
+	public function test_constructor($arguments, $table, $set)
 	{
 		$class = new \ReflectionClass('SQL\DML\Update');
 		$update = $class->newInstanceArgs($arguments);
 
 		$this->assertEquals($table, $update->table);
-		$this->assertEquals($values, $update->values);
+		$this->assertEquals($set, $update->set);
 
 		$this->assertSame('UPDATE :table SET :values', (string) $update);
 		$this->assertEquals(
 			array_merge(
 				$this->parameters,
-				array(':table' => $table, ':values' => $values)
+				array(':table' => $table, ':values' => $set)
 			),
 			$update->parameters
 		);
@@ -207,18 +207,18 @@ class UpdateTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_set
 	 *
 	 * @param   array   $argument   Argument
-	 * @param   array   $values     Expected
+	 * @param   array   $set        Expected
 	 */
-	public function test_set($argument, $values)
+	public function test_set($argument, $set)
 	{
 		$update = new Update;
 
 		$this->assertSame($update, $update->set($argument));
-		$this->assertEquals($values, $update->values);
+		$this->assertEquals($set, $update->set);
 
 		$this->assertSame('UPDATE :table SET :values', (string) $update);
 		$this->assertEquals(
-			array_merge($this->parameters, array(':values' => $values)),
+			array_merge($this->parameters, array(':values' => $set)),
 			$update->parameters
 		);
 	}
@@ -236,7 +236,7 @@ class UpdateTest extends \PHPUnit_Framework_TestCase
 		$update->set($argument);
 
 		$this->assertSame($update, $update->set(NULL));
-		$this->assertNull($update->values);
+		$this->assertNull($update->set);
 
 		$this->assertSame('UPDATE :table SET :values', (string) $update);
 		$this->assertSame($this->parameters, $update->parameters);
@@ -316,20 +316,20 @@ class UpdateTest extends \PHPUnit_Framework_TestCase
 	 *
 	 * @dataProvider    provider_value
 	 *
-	 * @param   mixed   $column     First argument
-	 * @param   mixed   $value      Second argument
-	 * @param   array   $values     Expected
+	 * @param   mixed   $column First argument
+	 * @param   mixed   $value  Second argument
+	 * @param   array   $set    Expected
 	 */
-	public function test_value($column, $value, $values)
+	public function test_value($column, $value, $set)
 	{
 		$update = new Update;
 
 		$this->assertSame($update, $update->value($column, $value));
-		$this->assertEquals($values, $update->values);
+		$this->assertEquals($set, $update->set);
 
 		$this->assertSame('UPDATE :table SET :values', (string) $update);
 		$this->assertEquals(
-			array_merge($this->parameters, array(':values' => $values)),
+			array_merge($this->parameters, array(':values' => $set)),
 			$update->parameters
 		);
 	}
