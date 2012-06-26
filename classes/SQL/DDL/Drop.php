@@ -1,14 +1,18 @@
 <?php
+namespace SQL\DDL;
+
+use SQL\Expression;
+use SQL\Identifier;
 
 /**
  * Generic DROP statement. Some drivers do not support some features. Use the
- * more specific [SQL_DDL_Drop_Table] statement for dropping tables.
+ * more specific [Drop_Table] statement for dropping tables.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @category    Data Definition Commands
  *
  * @author      Chris Bandy
- * @copyright   (c) 2010 Chris Bandy
+ * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  *
  * @link http://dev.mysql.com/doc/en/sql-syntax-data-definition.html MySQL
@@ -16,39 +20,54 @@
  * @link http://www.sqlite.org/lang.html SQLite
  * @link http://msdn.microsoft.com/library/cc879259.aspx Transact-SQL
  */
-class SQL_DDL_Drop extends SQL_Expression
+class Drop extends Expression
 {
 	/**
 	 * @var boolean Whether or not dependent objects should be dropped
 	 */
-	protected $_cascade;
+	public $cascade;
 
 	/**
 	 * @var boolean Whether or not an error should be suppressed if the object does not exist
 	 */
-	protected $_if_exists;
+	public $if_exists;
 
 	/**
-	 * @uses SQL_DDL_Drop::name()
-	 * @uses SQL_DDL_Drop::cascade()
+	 * @var array   List of objects to drop
+	 */
+	public $names;
+
+	/**
+	 * @var string  Type of objects to drop
+	 */
+	public $type;
+
+	/**
+	 * @uses name()
+	 * @uses cascade()
 	 *
-	 * @param   string                                      $type       INDEX, SCHEMA, VIEW, etc.
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $name       Converted to SQL_Identifier
-	 * @param   boolean                                     $cascade    Whether or not dependent objects should be dropped
+	 * @param   string                              $type       INDEX, SCHEMA, VIEW, etc.
+	 * @param   array|string|Expression|Identifier  $name       Converted to Identifier
+	 * @param   boolean                             $cascade    Whether or not dependent objects should be dropped
 	 */
 	public function __construct($type, $name = NULL, $cascade = NULL)
 	{
-		parent::__construct('DROP '.strtoupper($type));
+		$this->names =& $this->parameters[':names'];
+		$this->type = $type;
 
-		$this->name($name);
 		$this->cascade($cascade);
+
+		if ($name !== NULL)
+		{
+			$this->name($name);
+		}
 	}
 
 	public function __toString()
 	{
-		$value = $this->_value;
+		$value = 'DROP '.strtoupper($this->type);
 
-		if ($this->_if_exists)
+		if ($this->if_exists)
 		{
 			// Not allowed in MSSQL
 			$value .= ' IF EXISTS';
@@ -56,12 +75,12 @@ class SQL_DDL_Drop extends SQL_Expression
 
 		$value .= ' :names';
 
-		if (isset($this->_cascade))
+		if ($this->cascade !== NULL)
 		{
 			// Not allowed in MSSQL
 			// Not allowed in MySQL
 			// Not allowed in SQLite
-			$value .= $this->_cascade ? ' CASCADE' : ' RESTRICT';
+			$value .= $this->cascade ? ' CASCADE' : ' RESTRICT';
 		}
 
 		return $value;
@@ -77,7 +96,7 @@ class SQL_DDL_Drop extends SQL_Expression
 	 */
 	public function cascade($value = TRUE)
 	{
-		$this->_cascade = $value;
+		$this->cascade = $value;
 
 		return $this;
 	}
@@ -91,7 +110,7 @@ class SQL_DDL_Drop extends SQL_Expression
 	 */
 	public function if_exists($value = TRUE)
 	{
-		$this->_if_exists = $value;
+		$this->if_exists = $value;
 
 		return $this;
 	}
@@ -101,25 +120,17 @@ class SQL_DDL_Drop extends SQL_Expression
 	 *
 	 * [!!] SQLite allows only one object per statement
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $name   Converted to SQL_Identifier or NULL to reset
+	 * @param   array|string|Expression|Identifier  $name   Converted to Identifier
 	 * @return  $this
 	 */
 	public function name($name)
 	{
-		if ($name === NULL)
+		if ( ! $name instanceof Expression AND ! $name instanceof Identifier)
 		{
-			$this->parameters[':names'] = array();
+			$name = new Identifier($name);
 		}
-		else
-		{
-			if ( ! $name instanceof SQL_Expression
-				AND ! $name instanceof SQL_Identifier)
-			{
-				$name = new SQL_Identifier($name);
-			}
 
-			$this->parameters[':names'][] = $name;
-		}
+		$this->names[] = $name;
 
 		return $this;
 	}
@@ -129,26 +140,20 @@ class SQL_DDL_Drop extends SQL_Expression
 	 *
 	 * [!!] SQLite allows only one object per statement
 	 *
-	 * @param   array   $names  List of names, each converted to SQL_Identifier, or NULL to reset
+	 * @param   array   $names  List of names, each converted to Identifier, or NULL to reset
 	 * @return  $this
 	 */
 	public function names($names)
 	{
 		if ($names === NULL)
 		{
-			$this->parameters[':names'] = array();
+			$this->names = NULL;
 		}
 		else
 		{
 			foreach ($names as $name)
 			{
-				if ( ! $name instanceof SQL_Expression
-					AND ! $name instanceof SQL_Identifier)
-				{
-					$name = new SQL_Identifier($name);
-				}
-
-				$this->parameters[':names'][] = $name;
+				$this->name($name);
 			}
 		}
 
