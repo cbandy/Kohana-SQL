@@ -145,31 +145,24 @@ class Select extends Expression
 	/**
 	 * Append one column or expression to be selected.
 	 *
-	 * @param   array|string|Expression|Identifier  $column Converted to Column or NULL to reset
+	 * @param   array|string|Expression|Identifier  $column Converted to Column
 	 * @param   string                              $alias  Column alias
 	 * @return  $this
 	 */
 	public function column($column, $alias = NULL)
 	{
-		if ($column === NULL)
+		if ( ! $column instanceof Expression
+			AND ! $column instanceof Identifier)
 		{
-			$this->values = NULL;
+			$column = new Column($column);
 		}
-		else
+
+		if ($alias)
 		{
-			if ( ! $column instanceof Expression
-				AND ! $column instanceof Identifier)
-			{
-				$column = new Column($column);
-			}
-
-			if ($alias)
-			{
-				$column = new Alias($column, $alias);
-			}
-
-			$this->values[] = $column;
+			$column = new Alias($column, $alias);
 		}
+
+		$this->values[] = $column;
 
 		return $this;
 	}

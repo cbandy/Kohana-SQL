@@ -100,11 +100,6 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 
 	public function provider_column()
 	{
-		$result[] = array(array(NULL), NULL, 'SELECT *', $this->parameters);
-		$result[] = array(
-			array(NULL, 'any'), NULL, 'SELECT *', $this->parameters,
-		);
-
 		$values = array(new Column('a'));
 		$result[] = array(
 			array('a'), $values,
@@ -166,26 +161,6 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertSame($value, (string) $select);
 		$this->assertEquals($parameters, $select->parameters);
-	}
-
-	/**
-	 * @covers  SQL\DML\Select::column
-	 *
-	 * @dataProvider    provider_column
-	 *
-	 * @param   array   $arguments  Arguments
-	 */
-	public function test_column_reset($arguments)
-	{
-		$select = new Select;
-
-		call_user_func_array(array($select, 'column'), $arguments);
-
-		$this->assertSame($select, $select->column(NULL));
-		$this->assertNull($select->values);
-
-		$this->assertSame('SELECT *', (string) $select);
-		$this->assertSame($this->parameters, $select->parameters);
 	}
 
 	public function provider_columns()
