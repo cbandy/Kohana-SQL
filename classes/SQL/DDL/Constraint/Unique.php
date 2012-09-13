@@ -1,13 +1,19 @@
 <?php
+namespace SQL\DDL\Constraint;
+
+use SQL\Column;
+use SQL\DDL\Constraint;
+use SQL\Expression;
+use SQL\Identifier;
 
 /**
  * Generic UNIQUE constraint.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @category    Data Definition Expressions
  *
  * @author      Chris Bandy
- * @copyright   (c) 2010 Chris Bandy
+ * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  *
  * @link http://dev.mysql.com/doc/en/create-table.html MySQL
@@ -15,25 +21,32 @@
  * @link http://www.sqlite.org/syntaxdiagrams.html#table-constraint SQLite
  * @link http://msdn.microsoft.com/library/ms191166.aspx Transact-SQL
  */
-class SQL_DDL_Constraint_Unique extends SQL_DDL_Constraint
+class Unique extends Constraint
 {
 	/**
-	 * @uses SQL_DDL_Constraint_Unique::columns()
+	 * @var array   Columns that must contain unique values
+	 */
+	public $columns;
+
+	/**
+	 * @uses columns()
 	 *
-	 * @param   array   $columns    List of columns, each converted to SQL_Column
+	 * @param   array   $columns    List of columns, each converted to Column
 	 */
 	public function __construct($columns = NULL)
 	{
-		parent::__construct('UNIQUE');
+		parent::__construct();
+
+		$this->columns =& $this->parameters[':columns'];
 
 		$this->columns($columns);
 	}
 
 	public function __toString()
 	{
-		$value = parent::__toString().$this->_value;
+		$value = parent::__toString().'UNIQUE';
 
-		if ( ! empty($this->parameters[':columns']))
+		if ($this->columns)
 		{
 			$value .= ' (:columns)';
 		}
@@ -44,26 +57,26 @@ class SQL_DDL_Constraint_Unique extends SQL_DDL_Constraint
 	/**
 	 * Append multiple columns that must contain unique values.
 	 *
-	 * @param   array   $columns    List of columns, each converted to SQL_Column, or NULL to reset
+	 * @param   array   $columns    List of columns, each converted to Column, or NULL to reset
 	 * @return  $this
 	 */
 	public function columns($columns)
 	{
 		if ($columns === NULL)
 		{
-			$this->parameters[':columns'] = array();
+			$this->columns = NULL;
 		}
 		else
 		{
 			foreach ($columns as $column)
 			{
-				if ( ! $column instanceof SQL_Expression
-					AND ! $column instanceof SQL_Identifier)
+				if ( ! $column instanceof Expression
+					AND ! $column instanceof Identifier)
 				{
-					$column = new SQL_Column($column);
+					$column = new Column($column);
 				}
 
-				$this->parameters[':columns'][] = $column;
+				$this->columns[] = $column;
 			}
 		}
 

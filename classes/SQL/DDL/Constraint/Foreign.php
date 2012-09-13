@@ -1,13 +1,20 @@
 <?php
+namespace SQL\DDL\Constraint;
+
+use SQL\Column;
+use SQL\DDL\Constraint;
+use SQL\Expression;
+use SQL\Identifier;
+use SQL\Table;
 
 /**
  * Generic FOREIGN KEY constraint. Some drivers do not support some features.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @category    Data Definition Expressions
  *
  * @author      Chris Bandy
- * @copyright   (c) 2010 Chris Bandy
+ * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  *
  * @link http://dev.mysql.com/doc/en/ansi-diff-foreign-keys.html MySQL
@@ -15,35 +22,58 @@
  * @link http://www.sqlite.org/foreignkeys.html SQLite
  * @link http://msdn.microsoft.com/library/ms175464.aspx Transact-SQL
  */
-class SQL_DDL_Constraint_Foreign extends SQL_DDL_Constraint
+class Foreign extends Constraint
 {
+	/**
+	 * @var array   Referenced columns
+	 */
+	public $columns;
+
 	/**
 	 * @var boolean|string  The time at which a deferred constraint should be checked
 	 */
-	protected $_deferrable;
+	protected $deferrable;
 
 	/**
 	 * @var string  Match type
 	 */
-	protected $_match;
+	protected $match;
 
 	/**
 	 * @var array   Referential actions
 	 */
-	protected $_on;
+	protected $on;
 
 	/**
-	 * @uses SQL_DDL_Constraint_Foreign::table()
-	 * @uses SQL_DDL_Constraint_Foreign::columns()
+	 * @var array   Referencing columns
+	 */
+	public $referencing;
+
+	/**
+	 * @var Table   Referenced table
+	 */
+	public $table;
+
+	/**
+	 * @uses table()
+	 * @uses columns()
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $table      Converted to SQL_Table
-	 * @param   array                                       $columns    List of columns, each converted to SQL_Column
+	 * @param   array|string|Expression|Identifier  $table      Converted to Table
+	 * @param   array                               $columns    List of columns, each converted to Column
 	 */
 	public function __construct($table = NULL, $columns = NULL)
 	{
-		parent::__construct('REFERENCES :table');
+		parent::__construct();
 
-		$this->table($table);
+		$this->columns      =& $this->parameters[':columns'];
+		$this->referencing  =& $this->parameters[':referencing'];
+		$this->table        =& $this->parameters[':table'];
+
+		if ($table !== NULL)
+		{
+			$this->table($table);
+		}
+
 		$this->columns($columns);
 	}
 
@@ -51,51 +81,51 @@ class SQL_DDL_Constraint_Foreign extends SQL_DDL_Constraint
 	{
 		$value = parent::__toString();
 
-		if ( ! empty($this->parameters[':referencing']))
+		if ($this->referencing)
 		{
 			$value .= 'FOREIGN KEY (:referencing) ';
 		}
 
-		$value .= $this->_value;
+		$value .= 'REFERENCES :table';
 
-		if ( ! empty($this->parameters[':columns']))
+		if ($this->columns)
 		{
 			$value .= ' (:columns)';
 		}
 
-		if ($this->_match)
+		if ($this->match)
 		{
 			// Not allowed in MSSQL
 			// Not allowed in MySQL
-			$value .= ' MATCH '.$this->_match;
+			$value .= ' MATCH '.$this->match;
 		}
 
-		if ( ! empty($this->_on['DELETE']))
+		if ( ! empty($this->on['DELETE']))
 		{
-			$value .= ' ON DELETE '.$this->_on['DELETE'];
+			$value .= ' ON DELETE '.$this->on['DELETE'];
 		}
 
-		if ( ! empty($this->_on['UPDATE']))
+		if ( ! empty($this->on['UPDATE']))
 		{
-			$value .= ' ON UPDATE '.$this->_on['UPDATE'];
+			$value .= ' ON UPDATE '.$this->on['UPDATE'];
 		}
 
-		if (isset($this->_deferrable))
+		if ($this->deferrable !== NULL)
 		{
 			// Not allowed in MSSQL
 			// Not allowed in MySQL
-			if (empty($this->_deferrable))
-			{
-				$value .= ' NOT DEFERRABLE';
-			}
-			else
+			if ($this->deferrable)
 			{
 				$value .= ' DEFERRABLE';
 
-				if (is_string($this->_deferrable))
+				if (is_string($this->deferrable))
 				{
-					$value .= ' INITIALLY '.$this->_deferrable;
+					$value .= ' INITIALLY '.$this->deferrable;
 				}
+			}
+			else
+			{
+				$value .= ' NOT DEFERRABLE';
 			}
 		}
 
@@ -105,26 +135,26 @@ class SQL_DDL_Constraint_Foreign extends SQL_DDL_Constraint
 	/**
 	 * Append multiple referenced columns.
 	 *
-	 * @param   array   $columns    List of columns, each converted to SQL_Column, or NULL to reset
+	 * @param   array   $columns    List of columns, each converted to Column, or NULL to reset
 	 * @return  $this
 	 */
 	public function columns($columns)
 	{
 		if ($columns === NULL)
 		{
-			$this->parameters[':columns'] = array();
+			$this->columns = NULL;
 		}
 		else
 		{
 			foreach ($columns as $column)
 			{
-				if ( ! $column instanceof SQL_Expression
-					AND ! $column instanceof SQL_Identifier)
+				if ( ! $column instanceof Expression
+					AND ! $column instanceof Identifier)
 				{
-					$column = new SQL_Column($column);
+					$column = new Column($column);
 				}
 
-				$this->parameters[':columns'][] = $column;
+				$this->columns[] = $column;
 			}
 		}
 
@@ -142,7 +172,7 @@ class SQL_DDL_Constraint_Foreign extends SQL_DDL_Constraint
 	 */
 	public function deferrable($value)
 	{
-		$this->_deferrable = is_string($value) ? strtoupper($value) : $value;
+		$this->deferrable = is_string($value) ? strtoupper($value) : $value;
 
 		return $this;
 	}
@@ -157,13 +187,13 @@ class SQL_DDL_Constraint_Foreign extends SQL_DDL_Constraint
 	 */
 	public function match($value)
 	{
-		$this->_match = strtoupper($value);
+		$this->match = strtoupper($value);
 
 		return $this;
 	}
 
 	/**
-	 * Set a referential action
+	 * Set a referential action.
 	 *
 	 * @param   string  $event  DELETE or UPDATE
 	 * @param   string  $action CASCADE, RESTRICT, SET NULL, SET DEFAULT or NO ACTION
@@ -171,7 +201,7 @@ class SQL_DDL_Constraint_Foreign extends SQL_DDL_Constraint
 	 */
 	public function on($event, $action)
 	{
-		$this->_on[strtoupper($event)] = strtoupper($action);
+		$this->on[strtoupper($event)] = strtoupper($action);
 
 		return $this;
 	}
@@ -179,26 +209,26 @@ class SQL_DDL_Constraint_Foreign extends SQL_DDL_Constraint
 	/**
 	 * Append multiple referencing columns.
 	 *
-	 * @param   array   $columns    List of columns, each converted to SQL_Column, or NULL to reset
+	 * @param   array   $columns    List of columns, each converted to Column, or NULL to reset
 	 * @return  $this
 	 */
 	public function referencing($columns)
 	{
 		if ($columns === NULL)
 		{
-			$this->parameters[':referencing'] = array();
+			$this->referencing = NULL;
 		}
 		else
 		{
 			foreach ($columns as $column)
 			{
-				if ( ! $column instanceof SQL_Expression
-					AND ! $column instanceof SQL_Identifier)
+				if ( ! $column instanceof Expression
+					AND ! $column instanceof Identifier)
 				{
-					$column = new SQL_Column($column);
+					$column = new Column($column);
 				}
 
-				$this->parameters[':referencing'][] = $column;
+				$this->referencing[] = $column;
 			}
 		}
 
@@ -208,18 +238,17 @@ class SQL_DDL_Constraint_Foreign extends SQL_DDL_Constraint
 	/**
 	 * Set the referenced table.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $table  Converted to SQL_Table
+	 * @param   array|string|Expression|Identifier  $table  Converted to Table
 	 * @return  $this
 	 */
 	public function table($table)
 	{
-		if ( ! $table instanceof SQL_Expression
-			AND ! $table instanceof SQL_Identifier)
+		if ( ! $table instanceof Expression AND ! $table instanceof Identifier)
 		{
-			$table = new SQL_Table($table);
+			$table = new Table($table);
 		}
 
-		$this->parameters[':table'] = $table;
+		$this->table = $table;
 
 		return $this;
 	}
