@@ -1,13 +1,19 @@
 <?php
+namespace SQL\DDL;
+
+use SQL\Column;
+use SQL\Expression;
+use SQL\Identifier;
+use SQL\Table;
 
 /**
  * Generic CREATE VIEW statement. Some drivers do not support some features.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @category    Data Definition Commands
  *
  * @author      Chris Bandy
- * @copyright   (c) 2010 Chris Bandy
+ * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  *
  * @link http://dev.mysql.com/doc/en/create-view.html MySQL
@@ -15,30 +21,51 @@
  * @link http://www.sqlite.org/lang_createview.html SQLite
  * @link http://msdn.microsoft.com/library/ms187956.aspx Transact-SQL
  */
-class SQL_DDL_Create_View extends SQL_Expression
+class Create_View extends Expression
 {
+	/**
+	 * @var array   Columns or expressions to be included in the view
+	 */
+	public $columns;
+
+	/**
+	 * @var Table   Name of the view
+	 */
+	public $name;
+
+	/**
+	 * @var Expression  Query which will provide the columns and rows
+	 */
+	public $query;
+
 	/**
 	 * @var boolean Whether or not an existing view should be replaced
 	 */
-	protected $_replace;
+	public $replace;
 
 	/**
 	 * @var boolean Whether or not the view should be dropped at the end of the session
 	 */
-	protected $_temporary;
+	public $temporary;
 
 	/**
-	 * @uses SQL_DDL_Create_View::name()
-	 * @uses SQL_DDL_Create_View::query()
+	 * @uses name()
+	 * @uses query()
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $name   Converted to SQL_Table
-	 * @param   SQL_Expression                              $query
+	 * @param   array|string|Expression|Identifier  $name   Converted to Table
+	 * @param   Expression                          $query
 	 */
 	public function __construct($name = NULL, $query = NULL)
 	{
-		parent::__construct('');
+		$this->columns  =& $this->parameters[':columns'];
+		$this->name     =& $this->parameters[':name'];
+		$this->query    =& $this->parameters[':query'];
 
-		$this->name($name);
+		if ($name !== NULL)
+		{
+			$this->name($name);
+		}
+
 		$this->query($query);
 	}
 
@@ -46,14 +73,14 @@ class SQL_DDL_Create_View extends SQL_Expression
 	{
 		$value = 'CREATE';
 
-		if ($this->_replace)
+		if ($this->replace)
 		{
 			// Not allowed in MSSQL
 			// Not allowed in SQLite
 			$value .= ' OR REPLACE';
 		}
 
-		if ($this->_temporary)
+		if ($this->temporary)
 		{
 			// Not allowed in MSSQL
 			// Not allowed in MySQL
@@ -62,7 +89,7 @@ class SQL_DDL_Create_View extends SQL_Expression
 
 		$value .= ' VIEW :name';
 
-		if ( ! empty($this->parameters[':columns']))
+		if ($this->columns)
 		{
 			// Not allowed in SQLite
 			$value .= ' (:columns)';
@@ -76,25 +103,18 @@ class SQL_DDL_Create_View extends SQL_Expression
 	/**
 	 * Append one column or expression to be included in the view.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $column Converted to SQL_Column or NULL to reset
+	 * @param   array|string|Expression|Identifier  $column Converted to Column
 	 * @return  $this
 	 */
 	public function column($column)
 	{
-		if ($column === NULL)
+		if ( ! $column instanceof Expression
+			AND ! $column instanceof Identifier)
 		{
-			$this->parameters[':columns'] = array();
+			$column = new Column($column);
 		}
-		else
-		{
-			if ( ! $column instanceof SQL_Expression
-				AND ! $column instanceof SQL_Identifier)
-			{
-				$column = new SQL_Column($column);
-			}
 
-			$this->parameters[':columns'][] = $column;
-		}
+		$this->columns[] = $column;
 
 		return $this;
 	}
@@ -102,26 +122,26 @@ class SQL_DDL_Create_View extends SQL_Expression
 	/**
 	 * Append multiple columns and/or expressions to be included in the view.
 	 *
-	 * @param   array   $columns    List of columns, each converted to SQL_Column, or NULL to reset
+	 * @param   array   $columns    List of columns, each converted to Column, or NULL to reset
 	 * @return  $this
 	 */
 	public function columns($columns)
 	{
 		if ($columns === NULL)
 		{
-			$this->parameters[':columns'] = array();
+			$this->columns = NULL;
 		}
 		else
 		{
 			foreach ($columns as $column)
 			{
-				if ( ! $column instanceof SQL_Expression
-					AND ! $column instanceof SQL_Identifier)
+				if ( ! $column instanceof Expression
+					AND ! $column instanceof Identifier)
 				{
-					$column = new SQL_Column($column);
+					$column = new Column($column);
 				}
 
-				$this->parameters[':columns'][] = $column;
+				$this->columns[] = $column;
 			}
 		}
 
@@ -131,18 +151,17 @@ class SQL_DDL_Create_View extends SQL_Expression
 	/**
 	 * Set the name of the view.
 	 *
-	 * @param   array|string|SQL_Expression|SQL_Identifier  $value  Converted to SQL_Table
+	 * @param   array|string|Expression|Identifier  $value  Converted to Table
 	 * @return  $this
 	 */
 	public function name($value)
 	{
-		if ( ! $value instanceof SQL_Expression
-			AND ! $value instanceof SQL_Identifier)
+		if ( ! $value instanceof Expression AND ! $value instanceof Identifier)
 		{
-			$value = new SQL_Table($value);
+			$value = new Table($value);
 		}
 
-		$this->parameters[':name'] = $value;
+		$this->name = $value;
 
 		return $this;
 	}
@@ -150,12 +169,12 @@ class SQL_DDL_Create_View extends SQL_Expression
 	/**
 	 * Set the query which will provide the columns and rows of the view.
 	 *
-	 * @param   SQL_Expression  $query
+	 * @param   Expression  $query
 	 * @return  $this
 	 */
 	public function query($query)
 	{
-		$this->parameters[':query'] = $query;
+		$this->query = $query;
 
 		return $this;
 	}
@@ -170,7 +189,7 @@ class SQL_DDL_Create_View extends SQL_Expression
 	 */
 	public function replace($value = TRUE)
 	{
-		$this->_replace = $value;
+		$this->replace = $value;
 
 		return $this;
 	}
@@ -185,7 +204,7 @@ class SQL_DDL_Create_View extends SQL_Expression
 	 */
 	public function temporary($value = TRUE)
 	{
-		$this->_temporary = $value;
+		$this->temporary = $value;
 
 		return $this;
 	}
