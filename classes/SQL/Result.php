@@ -56,7 +56,9 @@ abstract class Result implements \Iterator
 
 			if ($name === NULL)
 			{
-				if (($result = reset($row)) !== NULL)
+				$result = reset($row);
+
+				if ($result !== NULL)
 					return $result;
 			}
 			else
