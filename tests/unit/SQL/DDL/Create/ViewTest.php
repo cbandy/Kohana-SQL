@@ -1,7 +1,7 @@
 <?php
 namespace SQL\DDL;
 
-use SQL\Column;
+use SQL\Column as SQL_Column;
 use SQL\Expression;
 use SQL\Identifier;
 use SQL\Table;
@@ -62,9 +62,9 @@ class Create_ViewTest extends \PHPUnit_Framework_TestCase
 	public function provider_column()
 	{
 		return array(
-			array(NULL, array(new Column(NULL))),
-			array('a', array(new Column('a'))),
-			array(new Column('b'), array(new Column('b'))),
+			array(NULL, array(new SQL_Column(NULL))),
+			array('a', array(new SQL_Column('a'))),
+			array(new SQL_Column('b'), array(new SQL_Column('b'))),
 			array(new Expression('c'), array(new Expression('c'))),
 		);
 	}
@@ -99,21 +99,21 @@ class Create_ViewTest extends \PHPUnit_Framework_TestCase
 			array(NULL, NULL, 'CREATE VIEW :name AS :query'),
 
 			array(
-				array('a'), array(new Column('a')),
+				array('a'), array(new SQL_Column('a')),
 				'CREATE VIEW :name (:columns) AS :query',
 			),
 			array(
-				array('a', 'b'), array(new Column('a'), new Column('b')),
+				array('a', 'b'), array(new SQL_Column('a'), new SQL_Column('b')),
 				'CREATE VIEW :name (:columns) AS :query',
 			),
 
 			array(
-				array(new Column('a')), array(new Column('a')),
+				array(new SQL_Column('a')), array(new SQL_Column('a')),
 				'CREATE VIEW :name (:columns) AS :query',
 			),
 			array(
-				array(new Column('a'), new Column('b')),
-				array(new Column('a'), new Column('b')),
+				array(new SQL_Column('a'), new SQL_Column('b')),
+				array(new SQL_Column('a'), new SQL_Column('b')),
 				'CREATE VIEW :name (:columns) AS :query',
 			),
 

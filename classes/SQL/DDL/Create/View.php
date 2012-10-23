@@ -1,7 +1,7 @@
 <?php
 namespace SQL\DDL;
 
-use SQL\Column;
+use SQL\Column as SQL_Column;
 use SQL\Expression;
 use SQL\Identifier;
 use SQL\Table;
@@ -111,7 +111,7 @@ class Create_View extends Expression
 		if ( ! $column instanceof Expression
 			AND ! $column instanceof Identifier)
 		{
-			$column = new Column($column);
+			$column = new SQL_Column($column);
 		}
 
 		$this->columns[] = $column;
@@ -138,7 +138,7 @@ class Create_View extends Expression
 				if ( ! $column instanceof Expression
 					AND ! $column instanceof Identifier)
 				{
-					$column = new Column($column);
+					$column = new SQL_Column($column);
 				}
 
 				$this->columns[] = $column;
