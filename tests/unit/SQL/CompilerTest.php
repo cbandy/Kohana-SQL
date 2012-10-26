@@ -579,9 +579,11 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 
 		if (error_reporting() & E_NOTICE)
 		{
-			$this->setExpectedException(
-				'ErrorException', 'Undefined', E_NOTICE
-			);
+			$exception = (class_exists('Kohana', FALSE) && Kohana::$errors)
+				? 'ErrorException'
+				: 'PHPUnit_Framework_Error_Notice';
+
+			$this->setExpectedException($exception, 'Undefined', E_NOTICE);
 
 			$compiler->quote_expression($value);
 		}
