@@ -1,7 +1,7 @@
 <?php
 namespace SQL\DDL;
 
-use SQL\Column;
+use SQL\Column as SQL_Column;
 use SQL\Expression;
 use SQL\Identifier;
 use SQL\Table;
@@ -30,12 +30,12 @@ class Create_IndexTest extends \PHPUnit_Framework_TestCase
 			array(array('a', 'b'), new Identifier('a'), new Table('b'), NULL),
 			array(
 				array('a', 'b', array('c')),
-				new Identifier('a'), new Table('b'), array(new Column('c')),
+				new Identifier('a'), new Table('b'), array(new SQL_Column('c')),
 			),
 			array(
 				array('a', 'b', array('c', 'd')),
 				new Identifier('a'), new Table('b'),
-				array(new Column('c'), new Column('d')),
+				array(new SQL_Column('c'), new SQL_Column('d')),
 			),
 		);
 	}
@@ -76,20 +76,20 @@ class Create_IndexTest extends \PHPUnit_Framework_TestCase
 		return array(
 			array(
 				array('a'),
-				array(new Column('a')),
+				array(new SQL_Column('a')),
 			),
 			array(
 				array('a', 'b'),
-				array(new Expression('? B', array(new Column('a')))),
+				array(new Expression('? B', array(new SQL_Column('a')))),
 			),
 
 			array(
-				array(new Column('c')),
-				array(new Column('c')),
+				array(new SQL_Column('c')),
+				array(new SQL_Column('c')),
 			),
 			array(
-				array(new Column('c'), 'd'),
-				array(new Expression('? D', array(new Column('c')))),
+				array(new SQL_Column('c'), 'd'),
+				array(new Expression('? D', array(new SQL_Column('c')))),
 			),
 
 			array(
@@ -136,20 +136,20 @@ class Create_IndexTest extends \PHPUnit_Framework_TestCase
 
 			array(
 				array('a'),
-				array(new Column('a')),
+				array(new SQL_Column('a')),
 			),
 			array(
 				array('a', 'b'),
-				array(new Column('a'), new Column('b')),
+				array(new SQL_Column('a'), new SQL_Column('b')),
 			),
 
 			array(
-				array(new Column('a')),
-				array(new Column('a')),
+				array(new SQL_Column('a')),
+				array(new SQL_Column('a')),
 			),
 			array(
-				array(new Column('a'), new Column('b')),
-				array(new Column('a'), new Column('b')),
+				array(new SQL_Column('a'), new SQL_Column('b')),
+				array(new SQL_Column('a'), new SQL_Column('b')),
 			),
 
 			array(
