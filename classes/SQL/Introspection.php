@@ -1,19 +1,18 @@
 <?php
+namespace SQL;
 
 /**
- * @package     RealDatabase
- * @category    Driver Interfaces
+ * @package     SQL
  *
  * @author      Chris Bandy
- * @copyright   (c) 2010 Chris Bandy
+ * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  */
-interface Database_iIntrospect
+interface Introspection
 {
 	/**
 	 * Retrieve the tables of a schema in a format almost identical to that of
-	 * the Tables table of the SQL-92 Information Schema. Only returns tables
-	 * having the `table_prefix` and removes `table_prefix` from the table names.
+	 * the Tables view of the SQL-92 Information Schema.
 	 *
 	 * For example, this schema has one table and one view:
 	 *
@@ -28,14 +27,15 @@ interface Database_iIntrospect
 	 *       ),
 	 *     );
 	 *
-	 * @param   array|string|SQL_Identifier $schema Converted to SQL_Identifier. NULL for the default schema.
+	 * @throws  RuntimeException
+	 * @param   array|string|Identifier $schema Converted to Identifier. NULL for the default schema.
 	 * @return  array
 	 */
 	public function schema_tables($schema = NULL);
 
 	/**
 	 * Retrieve the columns of a table in a format almost identical to that of
-	 * the Columns table of the SQL-92 Information Schema.
+	 * the Columns view of the SQL-92 Information Schema.
 	 *
 	 * For example, this table
 	 *
@@ -78,7 +78,8 @@ interface Database_iIntrospect
 	 * column definition. A NULL (or unset) value indicates that no DEFAULT
 	 * portion is defined.
 	 *
-	 * @param   array|string|SQL_Identifier $table  Converted to SQL_Table unless SQL_Identifier
+	 * @throws  RuntimeException
+	 * @param   array|string|Identifier $table  Converted to Table unless Identifier
 	 * @return  array
 	 */
 	public function table_columns($table);
