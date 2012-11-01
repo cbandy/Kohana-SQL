@@ -8,4 +8,4 @@ env: MYSQL='{"dsn":"mysql:dbname=kohana","username":"root"}' POSTGRESQL='{"dsn":
 
 before_script:
  - mysql -e 'CREATE DATABASE kohana'
- - psql -c 'CREATE DATABASE kohana'
+ - psql -c 'CREATE DATABASE kohana' -U postgres
