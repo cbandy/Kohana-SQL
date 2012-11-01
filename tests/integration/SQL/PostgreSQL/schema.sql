@@ -2,9 +2,7 @@
 /**
  * Schema required for PostgreSQL tests.
  *
- * Change this to include the table_prefix, if desired.
- *
- * @package      RealDatabase
+ * @package      SQL
  * @subpackage   PostgreSQL
  */
 
