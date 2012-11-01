@@ -1,30 +1,20 @@
 <?php
+namespace SQL\PDO;
 
-require_once dirname(__FILE__).'/testcase'.EXT;
-require_once 'PHPUnit/Extensions/Database/DataSet/CsvDataSet.php';
+use PDO;
+use PDOException;
 
 /**
- * @package     RealDatabase
+ * @package     SQL
  * @subpackage  PDO
  * @author      Chris Bandy
- *
- * @group   database
- * @group   database.pdo
  */
-class Database_PDO_Execution_Test extends Database_PDO_TestCase
+abstract class Execution_TestCase extends \PHPUnit_Framework_TestCase
 {
-	protected $_table = 'kohana_test_table';
-
-	protected function getDataSet()
-	{
-		$dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet;
-		$dataset->addTable(
-			Database::factory()->table_prefix().$this->_table,
-			dirname(dirname(__FILE__)).'/datasets/values.csv'
-		);
-
-		return $dataset;
-	}
+	/**
+	 * @var PDO
+	 */
+	protected $connection;
 
 	/**
 	 * 1-indexed parameters should not be passed to PDOStatement::execute(),
@@ -34,17 +24,17 @@ class Database_PDO_Execution_Test extends Database_PDO_TestCase
 	 *
 	 * @link    http://bugs.php.net/37290
 	 */
-	public function test_execute_parameters_one_indexed()
+	public function test_execute_with_one_indexed_parameters()
 	{
-		$pdo = $this->getConnection()->getConnection();
-
 		// PostgreSQL: Addition coerces the value to integer
 		$statement = 'SELECT ? + 0';
 
 		// 0-indexed array parameters succeed
-		$this->assertTrue($pdo->prepare($statement)->execute(array(1)));
+		$this->assertTrue(
+			$this->connection->prepare($statement)->execute(array(1))
+		);
 
-		$result = $pdo->prepare($statement);
+		$result = $this->connection->prepare($statement);
 
 		try
 		{
@@ -53,7 +43,7 @@ class Database_PDO_Execution_Test extends Database_PDO_TestCase
 		catch (PDOException $e)
 		{
 			// The exception message and code vary between drivers
-			switch ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME))
+			switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME))
 			{
 				case 'mysql':
 					$this->setExpectedException(
@@ -76,7 +66,7 @@ class Database_PDO_Execution_Test extends Database_PDO_TestCase
 		}
 
 		// Some drivers allow 1-indexed array parameters
-		switch ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME))
+		switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME))
 		{
 			case 'pgsql':
 				$this->assertTrue($result);
@@ -95,14 +85,12 @@ class Database_PDO_Execution_Test extends Database_PDO_TestCase
 	 * @link    http://bugs.php.net/33886
 	 * @link    http://www.php.net/manual/pdo.prepare.php
 	 */
-	public function test_execute_parameters_multiple_named()
+	public function test_execute_with_multiple_named_parameters()
 	{
-		$pdo = $this->getConnection()->getConnection();
-
 		// PostgreSQL: Addition coerces the values to integer
 		$statement = 'SELECT :a + 0, :a + 0';
 
-		$result = $pdo->prepare($statement);
+		$result = $this->connection->prepare($statement);
 
 		try
 		{
@@ -110,7 +98,7 @@ class Database_PDO_Execution_Test extends Database_PDO_TestCase
 		}
 		catch (PDOException $e)
 		{
-			switch ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME))
+			switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME))
 			{
 				case 'sqlsrv':
 					$this->setExpectedException(
@@ -125,7 +113,7 @@ class Database_PDO_Execution_Test extends Database_PDO_TestCase
 		$result = $result->fetch(PDO::FETCH_NUM);
 
 		// The returned data types vary between drivers
-		switch ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME))
+		switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME))
 		{
 			case 'pgsql':
 				$this->assertSame(array(1,1), $result);
