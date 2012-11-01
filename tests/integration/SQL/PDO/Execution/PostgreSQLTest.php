@@ -1,8 +1,6 @@
 <?php
 namespace SQL\PDO;
 
-use PDO;
-
 require_once __DIR__.'/TestCase.php';
 
 /**
@@ -16,7 +14,7 @@ class Execution_PostgreSQLTest extends Execution_TestCase
 	{
 		$config = json_decode($_SERVER['POSTGRESQL'], TRUE);
 
-		$this->connection = new PDO($config['dsn']);
-		$this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$this->connection = new \PDO($config['dsn']);
+		$this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 	}
 }

@@ -1,9 +1,6 @@
 <?php
 namespace SQL\PDO;
 
-use PDO;
-use PDOException;
-
 /**
  * @package     SQL
  * @subpackage  PDO
@@ -11,6 +8,12 @@ use PDOException;
  */
 abstract class Execution_TestCase extends \PHPUnit_Framework_TestCase
 {
+	public static function setupbeforeclass()
+	{
+		if ( ! extension_loaded('pdo'))
+			throw new \PHPUnit_Framework_SkippedTestSuiteError('PDO extension not installed');
+	}
+
 	/**
 	 * @var PDO
 	 */
@@ -40,10 +43,10 @@ abstract class Execution_TestCase extends \PHPUnit_Framework_TestCase
 		{
 			$result = $result->execute(array(1 => 1));
 		}
-		catch (PDOException $e)
+		catch (\PDOException $e)
 		{
 			// The exception message and code vary between drivers
-			switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME))
+			switch ($this->connection->getAttribute(\PDO::ATTR_DRIVER_NAME))
 			{
 				case 'mysql':
 					$this->setExpectedException(
@@ -66,7 +69,7 @@ abstract class Execution_TestCase extends \PHPUnit_Framework_TestCase
 		}
 
 		// Some drivers allow 1-indexed array parameters
-		switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME))
+		switch ($this->connection->getAttribute(\PDO::ATTR_DRIVER_NAME))
 		{
 			case 'pgsql':
 				$this->assertTrue($result);
@@ -96,9 +99,9 @@ abstract class Execution_TestCase extends \PHPUnit_Framework_TestCase
 		{
 			$this->assertTrue($result->execute(array(':a' => 1)));
 		}
-		catch (PDOException $e)
+		catch (\PDOException $e)
 		{
-			switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME))
+			switch ($this->connection->getAttribute(\PDO::ATTR_DRIVER_NAME))
 			{
 				case 'sqlsrv':
 					$this->setExpectedException(
@@ -110,10 +113,10 @@ abstract class Execution_TestCase extends \PHPUnit_Framework_TestCase
 			throw $e;
 		}
 
-		$result = $result->fetch(PDO::FETCH_NUM);
+		$result = $result->fetch(\PDO::FETCH_NUM);
 
 		// The returned data types vary between drivers
-		switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME))
+		switch ($this->connection->getAttribute(\PDO::ATTR_DRIVER_NAME))
 		{
 			case 'pgsql':
 				$this->assertSame(array(1,1), $result);
