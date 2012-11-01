@@ -10,6 +10,14 @@ require_once __DIR__.'/TestCase.php';
  */
 class Execution_SQLiteTest extends Execution_TestCase
 {
+	public static function setupbeforeclass()
+	{
+		parent::setupbeforeclass();
+
+		if ( ! extension_loaded('pdo_sqlite'))
+			throw new PHPUnit_Framework_SkippedTestSuiteError('PDO SQLite extension not installed');
+	}
+
 	public function setup()
 	{
 		$config = json_decode($_SERVER['SQLITE'], TRUE);
