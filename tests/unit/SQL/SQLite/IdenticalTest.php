@@ -1,13 +1,12 @@
 <?php
+namespace SQL\SQLite;
+
 /**
- * @package     RealDatabase
+ * @package     SQL
  * @subpackage  SQLite
  * @author      Chris Bandy
- *
- * @group   database
- * @group   database.pdo.sqlite
  */
-class Database_SQLite_Identical_Test extends PHPUnit_Framework_TestCase
+class IdenticalTest extends \PHPUnit_Framework_TestCase
 {
 	public function provider_toString()
 	{
@@ -19,7 +18,7 @@ class Database_SQLite_Identical_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  Database_SQLite_Identical::__toString
+	 * @covers  SQL\SQLite\Identical::__toString
 	 *
 	 * @dataProvider    provider_toString
 	 *
@@ -30,8 +29,8 @@ class Database_SQLite_Identical_Test extends PHPUnit_Framework_TestCase
 	 */
 	public function test_toString($left, $operator, $right, $expected)
 	{
-		$expression = new Database_SQLite_Identical($left, $operator, $right);
+		$identical = new Identical($left, $operator, $right);
 
-		$this->assertSame($expected, (string) $expression);
+		$this->assertSame($expected, (string) $identical);
 	}
 }
