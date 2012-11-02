@@ -1,62 +1,65 @@
 <?php
+namespace SQL\SQLite\DML;
+
+use SQL\DML\Select as SQL_Select;
 
 /**
  * SELECT statement for SQLite. Allows OFFSET without LIMIT.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @subpackage  SQLite
  * @category    Queries
  *
  * @author      Chris Bandy
- * @copyright   (c) 2011 Chris Bandy
+ * @copyright   (c) 2011-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  *
  * @link http://www.sqlite.org/lang_select.html
  * @link http://www.sqlite.org/limits.html
  */
-class Database_SQLite_DML_Select extends Database_DML_Select
+class Select extends SQL_Select
 {
 	public function __toString()
 	{
 		$value = 'SELECT';
 
-		if ($this->_distinct)
+		if ($this->distinct)
 		{
 			$value .= ' DISTINCT';
 		}
 
-		$value .= empty($this->parameters[':values']) ? ' *' : ' :values';
+		$value .= $this->values ? ' :values' : ' *';
 
-		if ( ! empty($this->parameters[':from']))
+		if ($this->from)
 		{
 			$value .= ' FROM :from';
 		}
 
-		if ( ! empty($this->parameters[':where']))
+		if ($this->where)
 		{
 			$value .= ' WHERE :where';
 		}
 
-		if ( ! empty($this->parameters[':groupby']))
+		if ($this->group_by)
 		{
 			$value .= ' GROUP BY :groupby';
 		}
 
-		if ( ! empty($this->parameters[':having']))
+		if ($this->having)
 		{
 			$value .= ' HAVING :having';
 		}
 
-		if ( ! empty($this->parameters[':orderby']))
+		if ($this->order_by)
 		{
 			$value .= ' ORDER BY :orderby';
 		}
 
-		if ( ! empty($this->parameters[':offset']))
+		if ($this->offset)
 		{
 			$value .= ' LIMIT :offset,';
 
-			if (isset($this->parameters[':limit']))
+			if ($this->limit !== NULL)
 			{
 				$value .= ':limit';
 			}
@@ -66,7 +69,7 @@ class Database_SQLite_DML_Select extends Database_DML_Select
 				$value .= '9223372036854775807';
 			}
 		}
-		elseif (isset($this->parameters[':limit']))
+		elseif ($this->limit !== NULL)
 		{
 			$value .= ' LIMIT :limit';
 		}

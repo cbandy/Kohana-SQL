@@ -53,4 +53,51 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 			$expected, $this->connection->execute_query($statement)->get()
 		);
 	}
+
+	/**
+	 * The OFFSET of a SELECT can be specified using a comma.
+	 *
+	 * @link http://www.sqlite.org/lang_select.html#orderby
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_select_offset_alternate()
+	{
+		$verbose = $this->connection
+			->execute_query("SELECT 'a' UNION SELECT 'b' LIMIT 5 OFFSET 1")
+			->to_array();
+
+		$alternate = $this->connection
+			->execute_query("SELECT 'a' UNION SELECT 'b' LIMIT 1,5")
+			->to_array();
+
+		$this->assertSame($verbose, $alternate);
+	}
+
+	/**
+	 * SELECT cannot have an OFFSET without a LIMIT.
+	 *
+	 * @link http://www.sqlite.org/lang_select.html#orderby
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_select_offset_without_limit()
+	{
+		$this->assertSame(
+			array(array("'a'" => 'a'), array("'a'" => 'b')),
+			$this->connection
+				->execute_query("SELECT 'a' UNION SELECT 'b' LIMIT 9223372036854775807 OFFSET 0")
+				->to_array()
+		);
+
+		$this->assertSame(
+			array(array("'a'" => 'b')),
+			$this->connection
+				->execute_query("SELECT 'a' UNION SELECT 'b' LIMIT 9223372036854775807 OFFSET 1")
+				->to_array()
+		);
+
+		$this->setExpectedException('SQL\RuntimeException', 'syntax error', 'HY000');
+		$this->connection->execute_query("SELECT 'a' UNION SELECT 'b' OFFSET 1");
+	}
 }
