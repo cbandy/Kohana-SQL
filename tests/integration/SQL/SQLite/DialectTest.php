@@ -100,4 +100,86 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 		$this->setExpectedException('SQL\RuntimeException', 'syntax error', 'HY000');
 		$this->connection->execute_query("SELECT 'a' UNION SELECT 'b' OFFSET 1");
 	}
+
+	/**
+	 * A query with a limit is only allowed as a subquery in a compound SELECT.
+	 *
+	 * @link http://www.sqlite.org/lang_select.html
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_union_limit()
+	{
+		$this->assertSame(
+			array(),
+			$this->connection->execute_query("SELECT 'a' LIMIT 0")->to_array()
+		);
+
+		$this->assertSame(
+			array(array("'a'" => 'b')),
+			$this->connection
+				->execute_query("SELECT * FROM (SELECT 'a' LIMIT 0) UNION SELECT 'b'")
+				->to_array()
+		);
+
+		$this->setExpectedException(
+			'SQL\RuntimeException', 'LIMIT clause should come after UNION', 'HY000'
+		);
+		$this->connection->execute_query("SELECT 'a' LIMIT 0 UNION SELECT 'b'");
+	}
+
+	/**
+	 * A sorted query is only allowed as a subquery in a compound SELECT.
+	 *
+	 * @link http://www.sqlite.org/lang_select.html
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_union_order_by()
+	{
+		$this->assertSame(
+			array(array("'a'" => 'a')),
+			$this->connection
+				->execute_query("SELECT 'a' ORDER BY 'a'")
+				->to_array()
+		);
+
+		$this->assertSame(
+			array(array("'a'" => 'a'), array("'a'" => 'b')),
+			$this->connection
+				->execute_query("SELECT * FROM (SELECT 'a' ORDER BY 'a') UNION SELECT 'b'")
+				->to_array()
+		);
+
+		$this->setExpectedException(
+			'SQL\RuntimeException', 'ORDER BY clause should come after UNION', 'HY000'
+		);
+		$this->connection->execute_query("SELECT 'a' ORDER BY 'a' UNION SELECT 'b'");
+	}
+
+	public function provider_union_parentheses()
+	{
+		return array(
+			array("SELECT 'a' UNION (SELECT 'b')"),
+			array("(SELECT 'a') UNION SELECT 'b'"),
+			array("(SELECT 'a') UNION (SELECT 'b')"),
+		);
+	}
+
+	/**
+	 * Queries in a compound SELECT cannot be wrapped in parentheses.
+	 *
+	 * @link http://www.sqlite.org/lang_select.html#compound
+	 *
+	 * @covers  PDO::query
+	 *
+	 * @dataProvider    provider_union_parentheses
+	 *
+	 * @param   string  $statement
+	 */
+	public function test_union_parentheses($statement)
+	{
+		$this->setExpectedException('SQL\RuntimeException', 'syntax error', 'HY000');
+		$this->connection->execute_query($statement);
+	}
 }
