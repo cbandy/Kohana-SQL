@@ -22,6 +22,13 @@ abstract class Connection_TestCase extends \PHPUnit_Framework_TestCase
 	protected $connection;
 	protected $table = 'kohana_test_table';
 
+	/**
+	 * Set the expected exception for a syntax error.
+	 *
+	 * @return  void
+	 */
+	abstract protected function expect_syntax_error_exception();
+
 	public function provider_execute_command()
 	{
 		return array(
@@ -115,8 +122,7 @@ abstract class Connection_TestCase extends \PHPUnit_Framework_TestCase
 	 */
 	public function test_execute_command_error($value)
 	{
-		$this->setExpectedException('SQL\RuntimeException', 'syntax', 'HY000');
-
+		$this->expect_syntax_error_exception();
 		$this->connection->execute_command($value);
 	}
 
@@ -201,8 +207,7 @@ abstract class Connection_TestCase extends \PHPUnit_Framework_TestCase
 	 */
 	public function test_execute_query_error($value)
 	{
-		$this->setExpectedException('SQL\RuntimeException', 'syntax', 'HY000');
-
+		$this->expect_syntax_error_exception();
 		$this->connection->execute_query($value);
 	}
 }

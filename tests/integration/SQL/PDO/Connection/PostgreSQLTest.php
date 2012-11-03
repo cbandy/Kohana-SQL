@@ -18,6 +18,11 @@ class Connection_PostgreSQLTest extends Connection_TestCase
 			throw new PHPUnit_Framework_SkippedTestSuiteError('PDO PostgreSQL extension not installed');
 	}
 
+	protected function expect_syntax_error_exception()
+	{
+		$this->setExpectedException('SQL\RuntimeException', 'syntax', '42601');
+	}
+
 	public function setup()
 	{
 		$config = json_decode($_SERVER['POSTGRESQL'], TRUE);

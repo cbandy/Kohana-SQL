@@ -18,6 +18,11 @@ class Connection_SQLiteTest extends Connection_TestCase
 			throw new PHPUnit_Framework_SkippedTestSuiteError('PDO SQLite extension not installed');
 	}
 
+	protected function expect_syntax_error_exception()
+	{
+		$this->setExpectedException('SQL\RuntimeException', 'syntax', 'HY000');
+	}
+
 	public function setup()
 	{
 		$config = json_decode($_SERVER['SQLITE'], TRUE);

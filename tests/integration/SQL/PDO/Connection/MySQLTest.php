@@ -18,6 +18,11 @@ class Connection_MySQLTest extends Connection_TestCase
 			throw new PHPUnit_Framework_SkippedTestSuiteError('PDO MySQL extension not installed');
 	}
 
+	protected function expect_syntax_error_exception()
+	{
+		$this->setExpectedException('SQL\RuntimeException', 'syntax', '42000');
+	}
+
 	public function setup()
 	{
 		$config = json_decode($_SERVER['MYSQL'], TRUE);
