@@ -1,7 +1,6 @@
 <?php
 namespace SQL\SQLite\DML;
 
-use SQL\DML\Select;
 use SQL\DML\Set as SQL_Set;
 
 /**

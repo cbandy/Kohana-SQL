@@ -2,7 +2,6 @@
 namespace SQL\SQLite\DML;
 
 use SQL\Expression;
-use SQL\DML\Select;
 
 /**
  * @package     SQL
