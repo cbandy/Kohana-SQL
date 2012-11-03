@@ -14,13 +14,83 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 	 * @var Connection
 	 */
 	protected $connection;
+
 	protected $table = 'kohana_test_table';
+
+	/**
+	 * @var string  Version of the SQLite library being used
+	 */
+	protected $version;
 
 	public function setup()
 	{
 		$config = json_decode($_SERVER['SQLITE'], TRUE);
 
 		$this->connection = new Connection($config);
+		$this->version = $this->connection
+			->execute_query('SELECT sqlite_version()')
+			->get();
+	}
+
+	public function provider_insert_compound_select()
+	{
+		return array(
+			array('INSERT INTO '.$this->table.' ("value") SELECT 5', 1),
+			array('INSERT INTO '.$this->table.' ("value") SELECT 5 UNION SELECT 6', 2),
+		);
+	}
+
+	/**
+	 * INSERT supports multiple rows using a compound SELECT.
+	 *
+	 * @link http://www.sqlite.org/lang_insert.html
+	 *
+	 * @covers  PDO::exec
+	 *
+	 * @dataProvider    provider_insert_compound_select
+	 *
+	 * @param   string  $statement
+	 * @param   integer $expected   Number of affected rows
+	 */
+	public function test_insert_compound_select($statement, $expected)
+	{
+		$this->assertSame(
+			$expected, $this->connection->execute_command($statement)
+		);
+	}
+
+	public function provider_insert_values()
+	{
+		return array(
+			array('INSERT INTO '.$this->table.' ("value") VALUES (5)', 1),
+			array('INSERT INTO '.$this->table.' ("value") VALUES (5), (6)', 2),
+		);
+	}
+
+	/**
+	 * Before SQLite 3.7.11, INSERT cannot have more than than one literal row.
+	 *
+	 * @link http://www.sqlite.org/lang_insert.html
+	 *
+	 * @covers  PDO::exec
+	 *
+	 * @dataProvider    provider_insert_values
+	 *
+	 * @param   string  $statement
+	 * @param   integer $expected   Number of affected rows
+	 */
+	public function test_insert_values($statement, $expected)
+	{
+		if ($expected > 1 AND version_compare($this->version, '3.7.11') < 0)
+		{
+			$this->setExpectedException(
+				'SQL\RuntimeException', 'syntax error', 'HY000'
+			);
+		}
+
+		$this->assertSame(
+			$expected, $this->connection->execute_command($statement)
+		);
 	}
 
 	public function provider_is_and_is_not()
@@ -178,6 +248,27 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 	 * @param   string  $statement
 	 */
 	public function test_union_parentheses($statement)
+	{
+		$this->setExpectedException('SQL\RuntimeException', 'syntax error', 'HY000');
+		$this->connection->execute_query($statement);
+	}
+
+	public function provider_values_outside_of_insert()
+	{
+		return array(
+			array('VALUES (1)'),
+			array('SELECT * FROM (VALUES (1))'),
+		);
+	}
+
+	/**
+	 * @covers  PDO::query
+	 *
+	 * @dataProvider    provider_values_outside_of_insert
+	 *
+	 * @param   string  $statement
+	 */
+	public function test_values_outside_of_insert($statement)
 	{
 		$this->setExpectedException('SQL\RuntimeException', 'syntax error', 'HY000');
 		$this->connection->execute_query($statement);

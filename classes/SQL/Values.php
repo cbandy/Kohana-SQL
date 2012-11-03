@@ -2,10 +2,10 @@
 namespace SQL;
 
 /**
- * Expression for building one or more row values.
+ * Expression for building one or more row values. Feature F641 of SQL:1999.
  *
  * [!!] MySQL and SQLite only allow this in INSERT statements
- * [!!] SQLite allows only one row with this syntax
+ * [!!] Older versions of SQLite allow only one row with this syntax
  *
  * @package     SQL
  * @category    Queries
@@ -18,6 +18,8 @@ namespace SQL;
  * @link http://www.postgresql.org/docs/current/static/sql-values.html PostgreSQL
  * @link http://www.sqlite.org/lang_insert.html SQLite
  * @link http://msdn.microsoft.com/library/dd776382.aspx Transact-SQL
+ *
+ * @see SQL\SQLite\Values
  */
 class Values extends Expression
 {
@@ -40,7 +42,7 @@ class Values extends Expression
 
 	public function __toString()
 	{
-		$count = count($this->parameters);
+		$count = count($this->rows);
 		$value = 'VALUES (?)';
 
 		if ($count > 1)
