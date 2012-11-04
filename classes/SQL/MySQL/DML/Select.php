@@ -1,66 +1,69 @@
 <?php
+namespace SQL\MySQL\DML;
+
+use SQL\DML\Select as SQL_Select;
 
 /**
  * SELECT statement for MySQL. Allows OFFSET without LIMIT, and automatically
  * uses the DUAL table when necessary.
  *
- * @package     RealDatabase
+ * @package     SQL
  * @subpackage  MySQL
  * @category    Queries
  *
  * @author      Chris Bandy
- * @copyright   (c) 2011 Chris Bandy
+ * @copyright   (c) 2011-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  *
  * @link http://dev.mysql.com/doc/en/select.html
  */
-class Database_MySQL_DML_Select extends Database_DML_Select
+class Select extends SQL_Select
 {
 	public function __toString()
 	{
 		$value = 'SELECT';
 
-		if ($this->_distinct)
+		if ($this->distinct)
 		{
 			$value .= ' DISTINCT';
 		}
 
-		$value .= empty($this->parameters[':values']) ? ' *' : ' :values';
+		$value .= $this->values ? ' :values' : ' *';
 
-		if ( ! empty($this->parameters[':from']))
+		if ($this->from)
 		{
 			$value .= ' FROM :from';
 		}
-		elseif ( ! empty($this->parameters[':where']))
+		elseif ($this->where)
 		{
 			$value .= ' FROM DUAL';
 		}
 
-		if ( ! empty($this->parameters[':where']))
+		if ($this->where)
 		{
 			$value .= ' WHERE :where';
 		}
 
-		if ( ! empty($this->parameters[':groupby']))
+		if ($this->group_by)
 		{
 			$value .= ' GROUP BY :groupby';
 		}
 
-		if ( ! empty($this->parameters[':having']))
+		if ($this->having)
 		{
 			$value .= ' HAVING :having';
 		}
 
-		if ( ! empty($this->parameters[':orderby']))
+		if ($this->order_by)
 		{
 			$value .= ' ORDER BY :orderby';
 		}
 
-		if ( ! empty($this->parameters[':offset']))
+		if ($this->offset)
 		{
 			$value .= ' LIMIT :offset,';
 
-			if (isset($this->parameters[':limit']))
+			if ($this->limit !== NULL)
 			{
 				$value .= ':limit';
 			}
@@ -70,7 +73,7 @@ class Database_MySQL_DML_Select extends Database_DML_Select
 				$value .= '18446744073709551615';
 			}
 		}
-		elseif (isset($this->parameters[':limit']))
+		elseif ($this->limit !== NULL)
 		{
 			$value .= ' LIMIT :limit';
 		}

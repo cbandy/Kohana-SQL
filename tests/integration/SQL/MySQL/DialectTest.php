@@ -23,6 +23,78 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 		$this->connection = new Connection($config);
 	}
 
+	/**
+	 * The OFFSET of a SELECT can be specified using a comma.
+	 *
+	 * @link http://dev.mysql.com/doc/en/select.html
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_select_offset_alternate()
+	{
+		$verbose = $this->connection
+			->execute_query("SELECT 'a' UNION SELECT 'b' LIMIT 5 OFFSET 1")
+			->to_array();
+
+		$alternate = $this->connection
+			->execute_query("SELECT 'a' UNION SELECT 'b' LIMIT 1,5")
+			->to_array();
+
+		$this->assertSame($verbose, $alternate);
+	}
+
+	/**
+	 * SELECT cannot have an OFFSET without a LIMIT.
+	 *
+	 * @link http://dev.mysql.com/doc/en/select.html
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_select_offset_without_limit()
+	{
+		$this->assertSame(
+			array(array('a' => 'a'), array('a' => 'b')),
+			$this->connection
+				->execute_query("SELECT 'a' UNION SELECT 'b' LIMIT 18446744073709551615 OFFSET 0")
+				->to_array()
+		);
+
+		$this->assertSame(
+			array(array('a' => 'b')),
+			$this->connection
+				->execute_query("SELECT 'a' UNION SELECT 'b' LIMIT 18446744073709551615 OFFSET 1")
+				->to_array()
+		);
+
+		$this->setExpectedException('SQL\RuntimeException', 'syntax', '42000');
+		$this->connection->execute_query("SELECT 'a' UNION SELECT 'b' OFFSET 1");
+	}
+
+	/**
+	 * A query with WHERE must also have FROM.
+	 *
+	 * @link http://dev.mysql.com/doc/en/select.html
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_select_where_without_from()
+	{
+		$this->assertSame(
+			array(array(1 => '1')),
+			$this->connection->execute_query('SELECT 1')->to_array()
+		);
+
+		$this->assertSame(
+			array(array(1 => '1')),
+			$this->connection
+				->execute_query('SELECT 1 FROM DUAL WHERE 1 = 1')
+				->to_array()
+		);
+
+		$this->setExpectedException('SQL\RuntimeException', 'syntax', '42000');
+		$this->connection->execute_query('SELECT 1 WHERE 1 = 1');
+	}
+
 	public function provider_spaceship()
 	{
 		return array(
