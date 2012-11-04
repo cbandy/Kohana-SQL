@@ -1,13 +1,12 @@
 <?php
+namespace SQL\MySQL;
+
 /**
- * @package     RealDatabase
+ * @package     SQL
  * @subpackage  MySQL
  * @author      Chris Bandy
- *
- * @group   database
- * @group   database.mysql
  */
-class Database_MySQL_Identical_Test extends PHPUnit_Framework_TestCase
+class IdenticalTest extends \PHPUnit_Framework_TestCase
 {
 	public function provider_toString()
 	{
@@ -19,7 +18,7 @@ class Database_MySQL_Identical_Test extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  Database_MySQL_Identical::__toString
+	 * @covers  SQL\MySQL\Identical::__toString
 	 *
 	 * @dataProvider    provider_toString
 	 *
@@ -30,7 +29,7 @@ class Database_MySQL_Identical_Test extends PHPUnit_Framework_TestCase
 	 */
 	public function test_toString($left, $operator, $right, $expected)
 	{
-		$expression = new Database_MySQL_Identical($left, $operator, $right);
+		$expression = new Identical($left, $operator, $right);
 
 		$this->assertSame($expected, (string) $expression);
 	}

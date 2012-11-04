@@ -99,9 +99,12 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 			array('1', 'SELECT NULL IS NULL'),
 			array('0', 'SELECT NULL IS 0'),
 			array('0', 'SELECT 0 IS NULL'),
+			array('1', 'SELECT 0 IS 0'),
+
 			array('0', 'SELECT NULL IS NOT NULL'),
 			array('1', 'SELECT NULL IS NOT 0'),
 			array('1', 'SELECT 0 IS NOT NULL'),
+			array('0', 'SELECT 0 IS NOT 0'),
 		);
 	}
 
