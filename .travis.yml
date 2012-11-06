@@ -9,6 +9,6 @@ env: MYSQL='{"dsn":"mysql:dbname=kohana","username":"root"}' POSTGRESQL='{"dsn":
 before_script:
  - mysql -e 'CREATE DATABASE kohana'
  - mysql -B kohana < tests/integration/SQL/MySQL/schema.sql
- - psql -c 'CREATE DATABASE kohana' -U postgres
- - psql -n -U postgres kohana < tests/integration/SQL/PostgreSQL/schema.sql
+ - createdb kohana
+ - psql -n kohana < tests/integration/SQL/PostgreSQL/schema.sql
  - sqlite3 kohana.sqlite3 < tests/integration/SQL/SQLite/schema.sql
