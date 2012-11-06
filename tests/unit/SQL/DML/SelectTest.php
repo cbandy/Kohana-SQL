@@ -32,22 +32,12 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 	public function provider_constructor()
 	{
 		return array(
-			array(array(), 'SELECT *', $this->parameters),
-			array(
-				array(array('a')),
-				'SELECT :values',
-				array_merge(
-					$this->parameters,
-					array(':values' => array(new Column('a')))
-				),
-			),
+			array(array(), NULL, 'SELECT *'),
+			array(array(array('a')), array(new Column('a')), 'SELECT :values'),
 			array(
 				array(array('a', 'b')),
+				array(new Column('a'), new Column('b')),
 				'SELECT :values',
-				array_merge(
-					$this->parameters,
-					array(':values' => array(new Column('a'), new Column('b')))
-				),
 			),
 		);
 	}
@@ -58,16 +48,21 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_constructor
 	 *
 	 * @param   array   $arguments  Arguments
+	 * @param   array   $values     Expected property
 	 * @param   string  $value
-	 * @param   array   $parameters
 	 */
-	public function test_constructor($arguments, $value, $parameters)
+	public function test_constructor($arguments, $values, $value)
 	{
 		$class = new \ReflectionClass('SQL\DML\Select');
 		$select = $class->newInstanceArgs($arguments);
 
+		$this->assertEquals($values, $select->values);
+
 		$this->assertSame($value, (string) $select);
-		$this->assertEquals($parameters, $select->parameters);
+		$this->assertEquals(
+			array_merge($this->parameters, array(':values' => $values)),
+			$select->parameters
+		);
 	}
 
 	public function provider_distinct()
@@ -100,43 +95,20 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 
 	public function provider_column()
 	{
-		$values = array(new Column('a'));
-		$result[] = array(
-			array('a'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
+		return array(
+			array(array('a'), array(new Column('a'))),
+			array(array('a', 'b'), array(new Alias(new Column('a'), 'b'))),
+			array(array(new Column('a')), array(new Column('a'))),
+			array(
+				array(new Column('a'), 'b'),
+				array(new Alias(new Column('a'), 'b')),
+			),
+			array(array(new Expression('a')), array(new Expression('a'))),
+			array(
+				array(new Expression('a'), 'b'),
+				array(new Alias(new Expression('a'), 'b')),
+			),
 		);
-
-		$values = array(new Alias(new Column('a'), 'b'));
-		$result[] = array(
-			array('a', 'b'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Column('a'));
-		$result[] = array(
-			array(new Column('a')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Alias(new Column('a'), 'b'));
-		$result[] = array(
-			array(new Column('a'), 'b'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Expression('a'));
-		$result[] = array(
-			array(new Expression('a')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Alias(new Expression('a'), 'b'));
-		$result[] = array(
-			array(new Expression('a'), 'b'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		return $result;
 	}
 
 	/**
@@ -146,110 +118,91 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 	 *
 	 * @param   array   $arguments  Arguments
 	 * @param   array   $values     Expected property
-	 * @param   string  $value
-	 * @param   array   $parameters
 	 */
-	public function test_column($arguments, $values, $value, $parameters)
+	public function test_column($arguments, $values)
 	{
 		$select = new Select;
 
 		$this->assertSame(
 			$select, call_user_func_array(array($select, 'column'), $arguments)
 		);
-
 		$this->assertEquals($values, $select->values);
 
-		$this->assertSame($value, (string) $select);
-		$this->assertEquals($parameters, $select->parameters);
+		$this->assertSame('SELECT :values', (string) $select);
+		$this->assertEquals(
+			array_merge($this->parameters, array(':values' => $values)),
+			$select->parameters
+		);
 	}
 
 	public function provider_columns()
 	{
-		$result[] = array(NULL, NULL, 'SELECT *', $this->parameters);
+		return array(
+			array(NULL, NULL, 'SELECT *'),
+			array(array('a'), array(new Column('a')), 'SELECT :values'),
+			array(
+				array('a', 'b'), array(new Column('a'), new Column('b')),
+				'SELECT :values',
+			),
+			array(
+				array('a' => 'b'), array(new Alias(new Column('b'), 'a')),
+				'SELECT :values',
+			),
+			array(
+				array('a' => 'b', 'c' => 'd'),
+				array(
+					new Alias(new Column('b'), 'a'),
+					new Alias(new Column('d'), 'c'),
+				),
+				'SELECT :values',
+			),
 
-		$values = array(new Column('a'));
-		$result[] = array(
-			array('a'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
+			array(
+				array(new Column('a')), array(new Column('a')),
+				'SELECT :values',
+			),
+			array(
+				array(new Column('a'), new Column('b')),
+				array(new Column('a'), new Column('b')),
+				'SELECT :values',
+			),
+			array(
+				array('a' => new Column('b')),
+				array(new Alias(new Column('b'), 'a')),
+				'SELECT :values',
+			),
+			array(
+				array('a' => new Column('b'), 'c' => new Column('d')),
+				array(
+					new Alias(new Column('b'), 'a'),
+					new Alias(new Column('d'), 'c'),
+				),
+				'SELECT :values',
+			),
 
-		$values = array(new Column('a'), new Column('b'));
-		$result[] = array(
-			array('a', 'b'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
+			array(
+				array(new Expression('a')), array(new Expression('a')),
+				'SELECT :values',
+			),
+			array(
+				array(new Expression('a'), new Expression('b')),
+				array(new Expression('a'), new Expression('b')),
+				'SELECT :values',
+			),
+			array(
+				array('a' => new Expression('b')),
+				array(new Alias(new Expression('b'), 'a')),
+				'SELECT :values',
+			),
+			array(
+				array('a' => new Expression('b'), 'c' => new Expression('d')),
+				array(
+					new Alias(new Expression('b'), 'a'),
+					new Alias(new Expression('d'), 'c'),
+				),
+				'SELECT :values',
+			),
 		);
-
-		$values = array(new Alias(new Column('b'), 'a'));
-		$result[] = array(
-			array('a' => 'b'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(
-			new Alias(new Column('b'), 'a'),
-			new Alias(new Column('d'), 'c'),
-		);
-		$result[] = array(
-			array('a' => 'b', 'c' => 'd'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Column('a'));
-		$result[] = array(
-			array(new Column('a')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Column('a'), new Column('b'));
-		$result[] = array(
-			array(new Column('a'), new Column('b')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Alias(new Column('b'), 'a'));
-		$result[] = array(
-			array('a' => new Column('b')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(
-			new Alias(new Column('b'), 'a'),
-			new Alias(new Column('d'), 'c'),
-		);
-		$result[] = array(
-			array('a' => new Column('b'), 'c' => new Column('d')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Expression('a'));
-		$result[] = array(
-			array(new Expression('a')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Expression('a'), new Expression('b'));
-		$result[] = array(
-			array(new Expression('a'), new Expression('b')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Alias(new Expression('b'), 'a'));
-		$result[] = array(
-			array('a' => new Expression('b')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(
-			new Alias(new Expression('b'), 'a'),
-			new Alias(new Expression('d'), 'c'),
-		);
-		$result[] = array(
-			array('a' => new Expression('b'), 'c' => new Expression('d')),
-			$values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		return $result;
 	}
 
 	/**
@@ -258,11 +211,10 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_columns
 	 *
 	 * @param   mixed   $argument   Argument
-	 * @param   array   $values
+	 * @param   array   $values     Expected property
 	 * @param   string  $value
-	 * @param   array   $parameters
 	 */
-	public function test_columns($argument, $values, $value, $parameters)
+	public function test_columns($argument, $values, $value)
 	{
 		$select = new Select;
 
@@ -270,7 +222,10 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($values, $select->values);
 
 		$this->assertSame($value, (string) $select);
-		$this->assertEquals($parameters, $select->parameters);
+		$this->assertEquals(
+			array_merge($this->parameters, array(':values' => $values)),
+			$select->parameters
+		);
 	}
 
 	/**
@@ -323,7 +278,7 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_value
 	 *
 	 * @param   array   $arguments  Arguments
-	 * @param   array   $values
+	 * @param   array   $values     Expected property
 	 */
 	public function test_value($arguments, $values)
 	{
@@ -332,85 +287,54 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame(
 			$select, call_user_func_array(array($select, 'value'), $arguments)
 		);
-
 		$this->assertEquals($values, $select->values);
 
 		$this->assertSame('SELECT :values', (string) $select);
 		$this->assertEquals(
-			array(':values' => $values) + $this->parameters,
+			array_merge($this->parameters, array(':values' => $values)),
 			$select->parameters
 		);
 	}
 
 	public function provider_values()
 	{
-		$result[] = array(NULL, NULL, 'SELECT *', $this->parameters);
+		return array(
+			array(NULL, NULL, 'SELECT *'),
+			array(array(0), array(0), 'SELECT :values'),
+			array(array(0, 1), array(0, 1), 'SELECT :values'),
+			array(array(0, 1, 'a'), array(0, 1, 'a'), 'SELECT :values'),
+			array(array(0, 1, 'a', 'b'), array(0, 1, 'a', 'b'), 'SELECT :values'),
 
-		$values = array(0);
-		$result[] = array(
-			array(0), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
+			array(array('a' => 0), array(new Alias(0, 'a')), 'SELECT :values'),
+			array(
+				array('a' => 0, 'b' => 'c'),
+				array(new Alias(0, 'a'), new Alias('c', 'b')),
+				'SELECT :values',
+			),
 
-		$values = array(0, 1);
-		$result[] = array(
-			array(0, 1), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
+			array(
+				array(new Expression('a')), array(new Expression('a')),
+				'SELECT :values',
+			),
+			array(
+				array(new Expression('a'), new Expression('b')),
+				array(new Expression('a'), new Expression('b')),
+				'SELECT :values',
+			),
+			array(
+				array('a' => new Expression('b')),
+				array(new Alias(new Expression('b'), 'a')),
+				'SELECT :values',
+			),
+			array(
+				array('a' => new Expression('b'), 'c' => new Expression('d')),
+				array(
+					new Alias(new Expression('b'), 'a'),
+					new Alias(new Expression('d'), 'c'),
+				),
+				'SELECT :values',
+			),
 		);
-
-		$values = array(0, 1, 'a');
-		$result[] = array(
-			array(0, 1, 'a'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(0, 1, 'a', 'b');
-		$result[] = array(
-			array(0, 1, 'a', 'b'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Alias(0, 'a'));
-		$result[] = array(
-			array('a' => 0), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Alias(0, 'a'), new Alias('c', 'b'));
-		$result[] = array(
-			array('a' => 0, 'b' => 'c'), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Expression('a'));
-		$result[] = array(
-			array(new Expression('a')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Expression('a'), new Expression('b'));
-		$result[] = array(
-			array(new Expression('a'), new Expression('b')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(new Alias(new Expression('b'), 'a'));
-		$result[] = array(
-			array('a' => new Expression('b')), $values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		$values = array(
-			new Alias(new Expression('b'), 'a'),
-			new Alias(new Expression('d'), 'c'),
-		);
-		$result[] = array(
-			array('a' => new Expression('b'), 'c' => new Expression('d')),
-			$values,
-			'SELECT :values', array(':values' => $values) + $this->parameters,
-		);
-
-		return $result;
 	}
 
 	/**
@@ -419,11 +343,10 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_values
 	 *
 	 * @param   array   $argument   Argument
-	 * @param   array   $values
+	 * @param   array   $values     Expected property
 	 * @param   string  $value
-	 * @param   array   $parameters
 	 */
-	public function test_values($argument, $values, $value, $parameters)
+	public function test_values($argument, $values, $value)
 	{
 		$select = new Select;
 
@@ -431,7 +354,10 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($values, $select->values);
 
 		$this->assertSame($value, (string) $select);
-		$this->assertEquals($parameters, $select->parameters);
+		$this->assertEquals(
+			array_merge($this->parameters, array(':values' => $values)),
+			$select->parameters
+		);
 	}
 
 	/**
@@ -483,7 +409,8 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertSame('SELECT * FROM :from', (string) $select);
 		$this->assertEquals(
-			array(':from' => $from) + $this->parameters, $select->parameters
+			array_merge($this->parameters, array(':from' => $from)),
+			$select->parameters
 		);
 	}
 
@@ -521,7 +448,8 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertSame('SELECT * WHERE :where', (string) $select);
 		$this->assertEquals(
-			array(':where' => $where) + $this->parameters, $select->parameters
+			array_merge($this->parameters, array(':where' => $where)),
+			$select->parameters
 		);
 	}
 
@@ -546,51 +474,36 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 
 	public function provider_group_by()
 	{
-		$result[] = array(NULL, NULL, 'SELECT *', $this->parameters);
+		return array(
+			array(NULL, NULL, 'SELECT *'),
+			array(
+				array('a'), array(new Column('a')),
+				'SELECT * GROUP BY :groupby',
+			),
+			array(
+				array('a', 'b'), array(new Column('a'), new Column('b')),
+				'SELECT * GROUP BY :groupby',
+			),
+			array(
+				array(new Column('a')), array(new Column('a')),
+				'SELECT * GROUP BY :groupby',
+			),
+			array(
+				array(new Column('a'), new Column('b')),
+				array(new Column('a'), new Column('b')),
+				'SELECT * GROUP BY :groupby',
+			),
 
-		$group_by = array(new Column('a'));
-		$result[] = array(
-			array('a'), $group_by,
-			'SELECT * GROUP BY :groupby',
-			array(':groupby' => $group_by) + $this->parameters,
+			array(
+				array(new Expression('a')), array(new Expression('a')),
+				'SELECT * GROUP BY :groupby',
+			),
+			array(
+				array(new Expression('a'), new Expression('b')),
+				array(new Expression('a'), new Expression('b')),
+				'SELECT * GROUP BY :groupby',
+			),
 		);
-
-		$group_by = array(new Column('a'), new Column('b'));
-		$result[] = array(
-			array('a', 'b'), $group_by,
-			'SELECT * GROUP BY :groupby',
-			array(':groupby' => $group_by) + $this->parameters,
-		);
-
-		$group_by = array(new Column('a'));
-		$result[] = array(
-			array(new Column('a')), $group_by,
-			'SELECT * GROUP BY :groupby',
-			array(':groupby' => $group_by) + $this->parameters,
-		);
-
-		$group_by = array(new Column('a'), new Column('b'));
-		$result[] = array(
-			array(new Column('a'), new Column('b')), $group_by,
-			'SELECT * GROUP BY :groupby',
-			array(':groupby' => $group_by) + $this->parameters,
-		);
-
-		$group_by = array(new Expression('a'));
-		$result[] = array(
-			array(new Expression('a')), $group_by,
-			'SELECT * GROUP BY :groupby',
-			array(':groupby' => $group_by) + $this->parameters,
-		);
-
-		$group_by = array(new Expression('a'), new Expression('b'));
-		$result[] = array(
-			array(new Expression('a'), new Expression('b')), $group_by,
-			'SELECT * GROUP BY :groupby',
-			array(':groupby' => $group_by) + $this->parameters,
-		);
-
-		return $result;
 	}
 
 	/**
@@ -599,11 +512,10 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_group_by
 	 *
 	 * @param   array   $argument   Argument
-	 * @param   array   $group_by   Expected
+	 * @param   array   $group_by   Expected property
 	 * @param   string  $value
-	 * @param   array   $parameters
 	 */
-	public function test_group_by($argument, $group_by, $value, $parameters)
+	public function test_group_by($argument, $group_by, $value)
 	{
 		$select = new Select;
 
@@ -611,7 +523,10 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($group_by, $select->group_by);
 
 		$this->assertSame($value, (string) $select);
-		$this->assertEquals($parameters, $select->parameters);
+		$this->assertEquals(
+			array_merge($this->parameters, array(':groupby' => $group_by)),
+			$select->parameters
+		);
 	}
 
 	/**
@@ -652,94 +567,69 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertSame('SELECT * HAVING :having', (string) $select);
 		$this->assertEquals(
-			array(':having' => $having) + $this->parameters, $select->parameters
+			array_merge($this->parameters, array(':having' => $having)),
+			$select->parameters
 		);
 	}
 
 	public function provider_order_by()
 	{
-		$result[] = array(array(NULL), NULL, 'SELECT *', $this->parameters);
-		$result[] = array(
-			array(NULL, 'any'), NULL,
-			'SELECT *', $this->parameters,
-		);
-		$result[] = array(
-			array(NULL, new Expression('any')), NULL,
-			'SELECT *', $this->parameters,
-		);
+		return array(
+			array(array(NULL), NULL, 'SELECT *'),
+			array(array(NULL, 'any'), NULL, 'SELECT *'),
+			array(array(NULL, new Expression('any')), NULL, 'SELECT *'),
 
-		$order_by = array(new Column('a'));
-		$result[] = array(
-			array('a'), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
+			array(
+				array('a'), array(new Column('a')),
+				'SELECT * ORDER BY :orderby',
+			),
+			array(
+				array('a', 'b'),
+				array(new Expression('? B', array(new Column('a')))),
+				'SELECT * ORDER BY :orderby',
+			),
+			array(
+				array('a', new Expression('b')),
+				array(new Expression('? ?', array(
+					new Column('a'), new Expression('b'))
+				)),
+				'SELECT * ORDER BY :orderby',
+			),
 
-		$order_by = array(new Expression('? B', array(new Column('a'))));
-		$result[] = array(
-			array('a', 'b'), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
+			array(
+				array(new Column('a')), array(new Column('a')),
+				'SELECT * ORDER BY :orderby',
+			),
+			array(
+				array(new Column('a'), 'b'),
+				array(new Expression('? B', array(new Column('a')))),
+				'SELECT * ORDER BY :orderby',
+			),
+			array(
+				array(new Column('a'),
+				new Expression('b')), array(new Expression('? ?', array(
+					new Column('a'), new Expression('b'))
+				)),
+				'SELECT * ORDER BY :orderby',
+			),
 
-		$order_by = array(
-			new Expression('? ?', array(new Column('a'), new Expression('b'))),
-		);
-		$result[] = array(
-			array('a', new Expression('b')), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
-
-		$order_by = array(new Column('a'));
-		$result[] = array(
-			array(new Column('a')), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
-
-		$order_by = array(new Expression('? B', array(new Column('a'))));
-		$result[] = array(
-			array(new Column('a'), 'b'), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
-
-		$order_by = array(
-			new Expression('? ?', array(new Column('a'), new Expression('b'))),
-		);
-		$result[] = array(
-			array(new Column('a'), new Expression('b')), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
-
-		$order_by = array(new Expression('a'));
-		$result[] = array(
-			array(new Expression('a')), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
-
-		$order_by = array(new Expression('? B', array(new Expression('a'))));
-		$result[] = array(
-			array(new Expression('a'), 'b'), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
-
-		$order_by = array(
-			new Expression(
-				'? ?', array(new Expression('a'), new Expression('b'))
+			array(
+				array(new Expression('a')), array(new Expression('a')),
+				'SELECT * ORDER BY :orderby',
+			),
+			array(
+				array(new Expression('a'), 'b'),
+				array(new Expression('? B', array(new Expression('a')))),
+				'SELECT * ORDER BY :orderby',
+			),
+			array(
+				array(new Expression('a'), new Expression('b')),
+				array(new Expression('? ?', array(
+					new Expression('a'), new Expression('b'))
+				)),
+				'SELECT * ORDER BY :orderby',
 			),
 		);
-		$result[] = array(
-			array(new Expression('a'), new Expression('b')), $order_by,
-			'SELECT * ORDER BY :orderby',
-			array(':orderby' => $order_by) + $this->parameters,
-		);
-
-		return $result;
 	}
 
 	/**
@@ -748,11 +638,10 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_order_by
 	 *
 	 * @param   array   $arguments  Arguments
-	 * @param   array   $order_by   Expected
+	 * @param   array   $order_by   Expected property
 	 * @param   string  $value
-	 * @param   array   $parameters
 	 */
-	public function test_order_by($arguments, $order_by, $value, $parameters)
+	public function test_order_by($arguments, $order_by, $value)
 	{
 		$select = new Select;
 
@@ -763,7 +652,10 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($order_by, $select->order_by);
 
 		$this->assertSame($value, (string) $select);
-		$this->assertEquals($parameters, $select->parameters);
+		$this->assertEquals(
+			array_merge($this->parameters, array(':orderby' => $order_by)),
+			$select->parameters
+		);
 	}
 
 	/**
