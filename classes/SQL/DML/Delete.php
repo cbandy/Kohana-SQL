@@ -119,6 +119,8 @@ class Delete extends Expression
 	/**
 	 * Set the maximum number of rows to be deleted.
 	 *
+	 * [!!] Not supported by PostgreSQL
+	 *
 	 * @param   integer $count  Number of rows or NULL to reset
 	 * @return  $this
 	 */
