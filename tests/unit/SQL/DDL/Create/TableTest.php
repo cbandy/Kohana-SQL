@@ -231,6 +231,69 @@ class Create_TableTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($this->parameters, $table->parameters);
 	}
 
+	public function provider_if_not_exists()
+	{
+		return array(
+			array(NULL, 'CREATE TABLE :name (:columns)'),
+			array(FALSE, 'CREATE TABLE :name (:columns)'),
+			array(TRUE, 'CREATE TABLE IF NOT EXISTS :name (:columns)'),
+		);
+	}
+
+	/**
+	 * @covers  SQL\DDL\Create_Table::if_not_exists
+	 *
+	 * @dataProvider    provider_if_not_exists
+	 *
+	 * @param   boolean $argument   Argument
+	 * @param   strign  $value
+	 */
+	public function test_if_not_exists($argument, $value)
+	{
+		$table = new Create_Table;
+
+		$this->assertSame($table, $table->if_not_exists($argument));
+		$this->assertSame($argument, $table->if_not_exists);
+
+		$this->assertSame($value, (string) $table);
+		$this->assertSame($this->parameters, $table->parameters);
+	}
+
+	/**
+	 * @covers  SQL\DDL\Create_Table::if_not_exists
+	 */
+	public function test_if_not_exists_default()
+	{
+		$table = new Create_Table;
+
+		$this->assertSame($table, $table->if_not_exists());
+		$this->assertTrue($table->if_not_exists);
+
+		$this->assertSame(
+			'CREATE TABLE IF NOT EXISTS :name (:columns)', (string) $table
+		);
+		$this->assertSame($this->parameters, $table->parameters);
+	}
+
+	/**
+	 * @covers  SQL\DDL\Create_Table::if_not_exists
+	 *
+	 * @dataProvider    provider_if_not_exists
+	 *
+	 * @param   boolean $argument   Argument
+	 */
+	public function test_if_not_exists_reset($argument)
+	{
+		$table = new Create_Table;
+		$table->if_not_exists($argument);
+
+		$this->assertSame($table, $table->if_not_exists(NULL));
+		$this->assertNull($table->if_not_exists);
+
+		$this->assertSame('CREATE TABLE :name (:columns)', (string) $table);
+		$this->assertSame($this->parameters, $table->parameters);
+	}
+
 	public function provider_name()
 	{
 		return array(
@@ -350,29 +413,33 @@ class Create_TableTest extends \PHPUnit_Framework_TestCase
 	public function test_toString()
 	{
 		$table = new Create_Table;
-		$table->temporary();
+		$table
+			->temporary()
+			->if_not_exists();
 
 		$this->assertSame(
-			'CREATE TEMPORARY TABLE :name (:columns)', (string) $table
+			'CREATE TEMPORARY TABLE IF NOT EXISTS :name (:columns)',
+			(string) $table
 		);
 
 		$table->constraint(new Constraint\Primary(array('a')));
 
 		$this->assertSame(
-			'CREATE TEMPORARY TABLE :name (:columns, :constraints)',
+			'CREATE TEMPORARY TABLE IF NOT EXISTS :name (:columns, :constraints)',
 			(string) $table
 		);
 
 		$table->query(new Expression('b'));
 
 		$this->assertSame(
-			'CREATE TEMPORARY TABLE :name AS (:query)', (string) $table
+			'CREATE TEMPORARY TABLE IF NOT EXISTS :name AS (:query)',
+			(string) $table
 		);
 
 		$table->column(new Column('c', 'd'));
 
 		$this->assertSame(
-			'CREATE TEMPORARY TABLE :name (:columns) AS (:query)',
+			'CREATE TEMPORARY TABLE IF NOT EXISTS :name (:columns) AS (:query)',
 			(string) $table
 		);
 	}

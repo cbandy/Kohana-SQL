@@ -33,6 +33,12 @@ class Create_Table extends Expression
 	public $constraints;
 
 	/**
+	 * @var boolean Whether or not an error should be suppressed if an object
+	 *  with the same name already exists
+	 */
+	public $if_not_exists;
+
+	/**
 	 * @var Table   Name of the table
 	 */
 	public $name;
@@ -75,12 +81,21 @@ class Create_Table extends Expression
 			$value .= ' TEMPORARY';
 		}
 
-		$value .= ' TABLE :name';
+		$value .= ' TABLE';
+
+		if ($this->if_not_exists)
+		{
+			// Not allowed in MSSQL
+			$value .= ' IF NOT EXISTS';
+		}
+
+		$value .= ' :name';
 
 		if ($this->query)
 		{
 			if ($this->columns)
 			{
+				// Not allowed in SQLite
 				$value .= ' (:columns)';
 			}
 
@@ -171,6 +186,22 @@ class Create_Table extends Expression
 				$this->constraints[] = $constraint;
 			}
 		}
+
+		return $this;
+	}
+
+	/**
+	 * Set whether or not an error should be suppressed if an object with the
+	 * same name already exists.
+	 *
+	 * [!!] Not supported by SQL Server
+	 *
+	 * @param   boolean $value
+	 * @return  $this
+	 */
+	public function if_not_exists($value = TRUE)
+	{
+		$this->if_not_exists = $value;
 
 		return $this;
 	}
