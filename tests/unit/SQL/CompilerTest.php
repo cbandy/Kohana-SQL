@@ -180,15 +180,15 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array('string', "'string'"),
 			array("multiline\nstring", "'multiline\nstring'"),
 
-			array(array(NULL), '(NULL)'),
-			array(array(FALSE), "('0')"),
-			array(array(TRUE), "('1')"),
+			array(array(NULL), 'ARRAY[NULL]'),
+			array(array(FALSE), "ARRAY['0']"),
+			array(array(TRUE), "ARRAY['1']"),
 
-			array(array(51678), '(51678)'),
-			array(array(12.345), '(12.345000)'),
+			array(array(51678), 'ARRAY[51678]'),
+			array(array(12.345), 'ARRAY[12.345000]'),
 
-			array(array('string'), "('string')"),
-			array(array("multiline\nstring"), "('multiline\nstring')"),
+			array(array('string'), "ARRAY['string']"),
+			array(array("multiline\nstring"), "ARRAY['multiline\nstring']"),
 		);
 	}
 
@@ -226,7 +226,8 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			"'object__toString'", $compiler->quote_literal($object)
 		);
 		$this->assertSame(
-			"('object__toString')", $compiler->quote_literal(array($object))
+			"ARRAY['object__toString']",
+			$compiler->quote_literal(array($object))
 		);
 	}
 

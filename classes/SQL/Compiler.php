@@ -326,9 +326,9 @@ class Compiler
 		}
 		elseif (is_array($value))
 		{
-			$value = '('
+			$value = 'ARRAY['
 				.implode(', ', array_map(array($this, __FUNCTION__), $value))
-				.')';
+				.']';
 		}
 		else
 		{
