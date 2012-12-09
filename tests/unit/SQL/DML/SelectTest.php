@@ -93,6 +93,20 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($this->parameters, $select->parameters);
 	}
 
+	/**
+	 * @covers  SQL\DML\Select::distinct
+	 */
+	public function test_distinct_default()
+	{
+		$select = new Select;
+
+		$this->assertSame($select, $select->distinct());
+		$this->assertTrue($select->distinct);
+
+		$this->assertSame('SELECT DISTINCT *', (string) $select);
+		$this->assertSame($this->parameters, $select->parameters);
+	}
+
 	public function provider_column()
 	{
 		return array(
