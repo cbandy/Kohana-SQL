@@ -23,6 +23,8 @@ class Compiler extends SQL_Compiler
 	 */
 	const MAX_LENGTH_IDENTIFIER = 63;
 
+	public $placeholder = '/(?:\?|(?<=^|::|[^:]):\w++)/';
+
 	/**
 	 * Convert a generic [Expression] into a parameterized [Statement].
 	 *

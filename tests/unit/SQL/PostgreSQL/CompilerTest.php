@@ -155,4 +155,44 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(0 => 1, 1 => 1), $statement->parameters()
 		);
 	}
+
+	public function provider_placeholder_with_type_cast()
+	{
+		return array(
+			array(
+				new Expression(':value::interval', array(':value' => '1 week')),
+				new Statement('$1::interval', array('1 week')),
+				"'1 week'::interval",
+			),
+			array(
+				new Expression(
+					"'yes':::type", array(':type' => new Expression('boolean'))
+				),
+				new Statement("'yes'::boolean"),
+				"'yes'::boolean",
+			),
+		);
+	}
+
+	/**
+	 * Double-colon can be used to type cast.
+	 *
+	 * @link http://www.postgresql.org/docs/current/static/sql-expressions.html#SQL-SYNTAX-TYPE-CASTS
+	 *
+	 * @covers  SQL\PostgreSQL\Compiler::parse_statement
+	 * @covers  SQL\PostgreSQL\Compiler::quote_expression
+	 *
+	 * @dataProvider    provider_placeholder_with_type_cast
+	 *
+	 * @param   Expression  $expression
+	 * @param   Statement   $statement
+	 * @param   string      $quoted
+	 */
+	public function test_placeholder_with_type_cast($expression, $statement, $quoted)
+	{
+		$compiler = new Compiler;
+
+		$this->assertEquals($statement, $compiler->parse_statement($expression));
+		$this->assertSame($quoted, $compiler->quote($expression));
+	}
 }
