@@ -18,6 +18,7 @@ class Create_IndexTest extends \PHPUnit_Framework_TestCase
 		':name' => NULL,
 		':table' => NULL,
 		':type' => NULL,
+		':options' => NULL,
 	);
 
 	public function provider_type()
@@ -76,56 +77,80 @@ class Create_IndexTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($this->parameters, $index->parameters);
 	}
 
-	public function provider_using()
+	public function provider_options()
 	{
 		return array(
 			array(NULL, NULL, 'CREATE INDEX :name ON :table (:columns)'),
 			array(
-				'btree', 'BTREE',
-				'CREATE INDEX :name ON :table (:columns) USING BTREE',
+				array('USING' => 'BTREE'),
+				new Options(array('USING' => 'BTREE')),
+				'CREATE INDEX :name ON :table (:columns) :options',
+			),
+			array(
+				new Expression('something else'),
+				new Expression('something else'),
+				'CREATE INDEX :name ON :table (:columns) :options',
 			),
 		);
 	}
 
 	/**
-	 * @covers  SQL\MySQL\DDL\Create_Index::__toString
-	 * @covers  SQL\MySQL\DDL\Create_Index::using
+	 * @covers  SQL\MySQL\DDL\Create_Index::options
 	 *
-	 * @dataProvider    provider_using
+	 * @dataProvider    provider_options
 	 *
-	 * @param   string  $argument   Argument
-	 * @param   string  $using      Expected property
+	 * @param   mixed   $argument   Argument
+	 * @param   Options $options    Expected property
 	 * @param   string  $value
 	 */
-	public function test_using($argument, $using, $value)
+	public function test_options($argument, $options, $value)
 	{
 		$index = new Create_Index;
 
-		$this->assertSame($index, $index->using($argument));
-		$this->assertSame($index->using, $using);
+		$this->assertSame($index, $index->options($argument));
+		$this->assertEquals($index->options, $options);
 
 		$this->assertSame($value, (string) $index);
-		$this->assertSame($this->parameters, $index->parameters);
+		$this->assertEquals(
+			array_merge($this->parameters, array(':options' => $options)),
+			$index->parameters
+		);
 	}
 
 	/**
-	 * @covers  SQL\MySQL\DDL\Create_Index::using
+	 * @covers  SQL\MySQL\DDL\Create_Index::options
 	 *
-	 * @dataProvider    provider_using
+	 * @dataProvider    provider_options
 	 *
-	 * @param   string  $argument   Argument
+	 * @param   mixed   $argument   Argument
 	 */
-	public function test_using_reset($argument)
+	public function test_options_reset($argument)
 	{
 		$index = new Create_Index;
-		$index->using($argument);
+		$index->options($argument);
 
-		$this->assertSame($index, $index->using(NULL));
-		$this->assertNull($index->using);
+		$this->assertSame($index, $index->options(NULL));
+		$this->assertNull($index->options);
 
 		$this->assertSame(
 			'CREATE INDEX :name ON :table (:columns)', (string) $index
 		);
 		$this->assertSame($this->parameters, $index->parameters);
+	}
+
+	/**
+	 * @covers  SQL\MySQL\DDL\Create_Index::__toString
+	 */
+	public function test_toString()
+	{
+		$index = new Create_Index;
+		$index
+			->type('unique')
+			->options(array('using' => 'btree'));
+
+		$this->assertSame(
+			'CREATE :type INDEX :name ON :table (:columns) :options',
+			(string) $index
+		);
 	}
 }

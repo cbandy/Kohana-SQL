@@ -5,7 +5,7 @@ use SQL\DDL\Create_Index as SQL_Create_Index;
 use SQL\Expression;
 
 /**
- * CREATE INDEX statement for MySQL.
+ * CREATE INDEX statement for MySQL. Allows index type and extra options.
  *
  * @package     SQL
  * @subpackage  MySQL
@@ -20,20 +20,45 @@ use SQL\Expression;
 class Create_Index extends SQL_Create_Index
 {
 	/**
-	 * @var string  Index type
+	 * @var Options Options of the index
 	 */
-	public $using;
+	public $options;
+
+	public function __construct($name = NULL, $table = NULL, $columns = NULL)
+	{
+		parent::__construct($name, $table, $columns);
+
+		$this->options =& $this->parameters[':options'];
+	}
 
 	public function __toString()
 	{
 		$value = parent::__toString();
 
-		if ($this->using)
+		if ($this->options)
 		{
-			$value .= ' USING '.$this->using;
+			$value .= ' :options';
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Set the options of the index.
+	 *
+	 * @param   array|Options   $options    Hash of (option => value) pairs
+	 * @return  $this
+	 */
+	public function options($options)
+	{
+		if (is_array($options))
+		{
+			$options = new Options($options);
+		}
+
+		$this->options = $options;
+
+		return $this;
 	}
 
 	/**
@@ -50,24 +75,6 @@ class Create_Index extends SQL_Create_Index
 		}
 
 		$this->type = $type;
-
-		return $this;
-	}
-
-	/**
-	 * Set the index type.
-	 *
-	 * @param   string  $type   BTREE, HASH, etc.
-	 * @return  $this
-	 */
-	public function using($type)
-	{
-		if ($type !== NULL)
-		{
-			$type = strtoupper($type);
-		}
-
-		$this->using = $type;
 
 		return $this;
 	}
