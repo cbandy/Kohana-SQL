@@ -7,7 +7,8 @@ use SQL\Identifier;
 use SQL\Table;
 
 /**
- * CREATE TABLE statement for MySQL.
+ * CREATE TABLE statement for MySQL. Allows extra options or for the entire
+ * definition to be copied from an existing table.
  *
  * @package     SQL
  * @subpackage  MySQL
@@ -21,6 +22,16 @@ use SQL\Table;
  */
 class Create_Table extends SQL_Create_Table
 {
+	/**
+	 * @var Table   Table from which to copy this table definition
+	 */
+	public $like;
+
+	/**
+	 * @var Options Options of the table
+	 */
+	public $options;
+
 	public function __construct($name = NULL)
 	{
 		parent::__construct($name);
