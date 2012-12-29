@@ -12,3 +12,5 @@ before_script:
  - createdb kohana
  - psql -n kohana < tests/integration/SQL/PostgreSQL/schema.sql
  - sqlite3 kohana.sqlite3 < tests/integration/SQL/SQLite/schema.sql
+
+script: "composer validate && phpunit"

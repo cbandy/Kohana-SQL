@@ -1,0 +1,8 @@
+/.travis.yml export-ignore
+/classes/database export-ignore
+/classes/database.php export-ignore
+/classes/sql.php export-ignore
+/config export-ignore
+/guide export-ignore
+/phpunit.xml export-ignore
+/tests export-ignore
