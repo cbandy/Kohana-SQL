@@ -160,6 +160,9 @@ class Create_IndexTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
+	/**
+	 * @covers  SQL\PostgreSQL\DDL\Create_Index::column
+	 */
 	public function test_column_defaults()
 	{
 		$index = new Create_Index;

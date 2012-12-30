@@ -7,6 +7,9 @@ namespace SQL;
  */
 class ResultTest extends \PHPUnit_Framework_TestCase
 {
+	/**
+	 * @coversNothing
+	 */
 	public function test_interfaces()
 	{
 		$class = new \ReflectionClass('SQL\Result');

@@ -37,6 +37,21 @@ class TestListener implements \PHPUnit_Framework_TestListener
 		}
 	}
 
+	protected function assertCoversAnnotation(TestCase $test, $time)
+	{
+		$annotations = $test->getAnnotations();
+
+		if (empty($annotations['method']['covers'])
+			AND empty($annotations['method']['coversNothing']))
+		{
+			$test->getTestResultObject()->addFailure(
+				$test,
+				new IncompleteTestError('This test does not have a @covers tag'),
+				$time
+			);
+		}
+	}
+
 	public function startTest(Test $test)
 	{
 	}
@@ -44,6 +59,7 @@ class TestListener implements \PHPUnit_Framework_TestListener
 	public function endTest(Test $test, $time)
 	{
 		$this->assertAssertions($test, $time);
+		$this->assertCoversAnnotation($test, $time);
 	}
 
 	public function startTestSuite(TestSuite $suite)
