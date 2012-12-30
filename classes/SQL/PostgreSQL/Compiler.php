@@ -4,6 +4,7 @@ namespace SQL\PostgreSQL;
 use SQL\Compiler as SQL_Compiler;
 use SQL\Expression;
 use SQL\Identifier;
+use SQL\Literal;
 use SQL\Statement;
 
 /**
@@ -81,6 +82,23 @@ class Compiler extends SQL_Compiler
 		};
 
 		/**
+		 * Unwrap a [Literal] parameter before capturing the value.
+		 *
+		 * @param   mixed   $value  Unquoted parameter
+		 * @return  string  SQL fragment
+		 */
+		$parser['literal'] = function (&$value) use ($compiler, &$parser)
+		{
+			if ($value instanceof Literal)
+				return $parser['literal']($value->value);
+
+			// Capture possible reference
+			$parser['parameters'][] =& $value;
+
+			return '$'.count($parser['parameters']);
+		};
+
+		/**
 		 * Recursively expand a parameter value to an SQL fragment consisting
 		 * only of placeholders.
 		 *
@@ -98,10 +116,7 @@ class Compiler extends SQL_Compiler
 			if ($value instanceof Identifier)
 				return $compiler->quote($value);
 
-			// Capture possible reference
-			$parser['parameters'][] =& $value;
-
-			return '$'.count($parser['parameters']);
+			return $parser['literal']($value);
 		};
 
 		$result = $parser['expression']($statement);
