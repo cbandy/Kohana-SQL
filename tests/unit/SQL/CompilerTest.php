@@ -121,6 +121,20 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 				new Expression(':a', array(':a' => array('b', new Table('c')))),
 				new Statement('?, "pre_c"', array('b'))
 			),
+
+			// data set #17
+			array(
+				new Expression('?', array(new Literal('a'))),
+				new Statement('?', array('a'))
+			),
+			array(
+				new Expression('?', array(new Literal(array('a')))),
+				new Statement('?', array(array('a'))),
+			),
+			array(
+				new Expression('?', array(new Literal(new Expression('a')))),
+				new Statement('?', array(new Expression('a'))),
+			),
 		);
 
 		return $result;
@@ -164,6 +178,30 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
+	/**
+	 * @covers  SQL\Compiler::parse_statement
+	 */
+	public function test_parse_statement_bound_literal()
+	{
+		$compiler = new Compiler;
+
+		$literal = new Literal(1);
+		$expression = new Expression('? :a');
+		$expression->bind(0, $literal);
+		$expression->bind(':a', $literal);
+
+		$statement = $compiler->parse_statement($expression);
+
+		$this->assertSame(
+			array(0 => 1, 1 => 1), $statement->parameters()
+		);
+
+		$literal->value = 2;
+		$this->assertSame(
+			array(0 => 2, 1 => 2), $statement->parameters()
+		);
+	}
+
 	public function provider_quote_literal()
 	{
 		return array
@@ -180,15 +218,42 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array('string', "'string'"),
 			array("multiline\nstring", "'multiline\nstring'"),
 
-			array(array(NULL), '(NULL)'),
-			array(array(FALSE), "('0')"),
-			array(array(TRUE), "('1')"),
+			array(array(), 'ARRAY[]'),
+			array(array(NULL), 'ARRAY[NULL]'),
+			array(array(FALSE), "ARRAY['0']"),
+			array(array(TRUE), "ARRAY['1']"),
 
-			array(array(51678), '(51678)'),
-			array(array(12.345), '(12.345000)'),
+			array(array(51678), 'ARRAY[51678]'),
+			array(array(12.345), 'ARRAY[12.345000]'),
 
-			array(array('string'), "('string')"),
-			array(array("multiline\nstring"), "('multiline\nstring')"),
+			array(array('string'), "ARRAY['string']"),
+			array(array("multiline\nstring"), "ARRAY['multiline\nstring']"),
+
+			array(new Literal(NULL), 'NULL'),
+			array(new Literal(FALSE), "'0'"),
+			array(new Literal(TRUE), "'1'"),
+
+			array(new Literal(0), '0'),
+			array(new Literal(-1), '-1'),
+			array(new Literal(51678), '51678'),
+			array(new Literal(12.345), '12.345000'),
+
+			array(new Literal('string'), "'string'"),
+			array(new Literal("multiline\nstring"), "'multiline\nstring'"),
+
+			array(new Literal(array()), 'ARRAY[]'),
+			array(new Literal(array(NULL)), 'ARRAY[NULL]'),
+			array(new Literal(array(FALSE)), "ARRAY['0']"),
+			array(new Literal(array(TRUE)), "ARRAY['1']"),
+
+			array(new Literal(array(51678)), 'ARRAY[51678]'),
+			array(new Literal(array(12.345)), 'ARRAY[12.345000]'),
+
+			array(new Literal(array('string')), "ARRAY['string']"),
+			array(
+				new Literal(array("multiline\nstring")),
+				"ARRAY['multiline\nstring']"
+			),
 		);
 	}
 
@@ -226,7 +291,8 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			"'object__toString'", $compiler->quote_literal($object)
 		);
 		$this->assertSame(
-			"('object__toString')", $compiler->quote_literal(array($object))
+			"ARRAY['object__toString']",
+			$compiler->quote_literal(array($object))
 		);
 	}
 
@@ -611,7 +677,10 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(new Table('one.two'),         '"one"."pre_two"'),
 
 			// Array
-			array(array(NULL, 1 ,'a'), "NULL, 1, 'a'"),
+			array(array(NULL, 1, 'a'), "NULL, 1, 'a'"),
+
+			// Literal Array
+			array(new Literal(array(NULL, 1, 'a')), "ARRAY[NULL, 1, 'a']"),
 		);
 	}
 

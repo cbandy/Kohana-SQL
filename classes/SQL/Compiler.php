@@ -96,6 +96,23 @@ class Compiler
 		};
 
 		/**
+		 * Unwrap a [Literal] parameter before capturing the value.
+		 *
+		 * @param   mixed   $value  Unquoted parameter
+		 * @return  string  SQL fragment
+		 */
+		$parser['literal'] = function (&$value) use ($compiler, &$parser)
+		{
+			if ($value instanceof Literal)
+				return $parser['literal']($value->value);
+
+			// Capture possible reference
+			$parser['parameters'][] =& $value;
+
+			return '?';
+		};
+
+		/**
 		 * Recursively expand a parameter value to an SQL fragment consisting
 		 * only of positional placeholders.
 		 *
@@ -113,10 +130,7 @@ class Compiler
 			if ($value instanceof Identifier)
 				return $compiler->quote($value);
 
-			// Capture possible reference
-			$parser['parameters'][] =& $value;
-
-			return '?';
+			return $parser['literal']($value);
 		};
 
 		$result = $parser['expression']($statement);
@@ -304,6 +318,11 @@ class Compiler
 	 */
 	public function quote_literal($value)
 	{
+		while ($value instanceof Literal)
+		{
+			$value = $value->value;
+		}
+
 		if ($value === NULL)
 		{
 			$value = 'NULL';
@@ -326,9 +345,9 @@ class Compiler
 		}
 		elseif (is_array($value))
 		{
-			$value = '('
+			$value = 'ARRAY['
 				.implode(', ', array_map(array($this, __FUNCTION__), $value))
-				.')';
+				.']';
 		}
 		else
 		{

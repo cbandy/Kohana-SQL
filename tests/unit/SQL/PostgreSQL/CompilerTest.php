@@ -3,6 +3,7 @@ namespace SQL\PostgreSQL;
 
 use SQL\Expression;
 use SQL\Identifier;
+use SQL\Literal;
 use SQL\Statement;
 use SQL\Table;
 
@@ -115,6 +116,20 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 				new Expression(':a :a', array(':a' => new Expression('? ?', array('b', 'c')))),
 				new Statement('$1 $2 $1 $2', array('b', 'c'))
 			),
+
+			// data set #22
+			array(
+				new Expression('?', array(new Literal('a'))),
+				new Statement('$1', array('a')),
+			),
+			array(
+				new Expression('?', array(new Literal(array('a')))),
+				new Statement('$1', array(array('a'))),
+			),
+			array(
+				new Expression('?', array(new Literal(new Expression('a')))),
+				new Statement('$1', array(new Expression('a'))),
+			),
 		);
 	}
 
@@ -153,6 +168,30 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 		$var = 1;
 		$this->assertSame(
 			array(0 => 1, 1 => 1), $statement->parameters()
+		);
+	}
+
+	/**
+	 * @covers  SQL\PostgreSQL\Compiler::parse_statement
+	 */
+	public function test_parse_statement_bound_literal()
+	{
+		$compiler = new Compiler;
+
+		$literal = new Literal(1);
+		$expression = new Expression('? :a');
+		$expression->bind(0, $literal);
+		$expression->bind(':a', $literal);
+
+		$statement = $compiler->parse_statement($expression);
+
+		$this->assertSame(
+			array(0 => 1, 1 => 1), $statement->parameters()
+		);
+
+		$literal->value = 2;
+		$this->assertSame(
+			array(0 => 2, 1 => 2), $statement->parameters()
 		);
 	}
 
