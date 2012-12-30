@@ -5,6 +5,9 @@
 			<directory suffix=".php">classes/SQL</directory>
 		</whitelist>
 	</filter>
+	<listeners>
+		<listener class="SQL\TestListener" file="tests/support/SQL/TestListener.php" />
+	</listeners>
 	<testsuites>
 		<testsuite name="Unit Tests">
 			<directory>tests/unit</directory>
