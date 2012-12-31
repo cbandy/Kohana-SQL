@@ -2,6 +2,7 @@
 	"name": "kohana/sql",
 	"description": "A library for writing and executing SQL",
 	"homepage": "http://github.com/cbandy/Kohana-SQL",
+	"license": "ISC",
 	"version": "v0.1.0",
 	"require": {
 		"php": ">=5.3.9"
