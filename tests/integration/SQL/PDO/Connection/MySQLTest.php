@@ -15,7 +15,10 @@ class Connection_MySQLTest extends Connection_TestCase
 		parent::setupbeforeclass();
 
 		if ( ! extension_loaded('pdo_mysql'))
-			throw new PHPUnit_Framework_SkippedTestSuiteError('PDO MySQL extension not installed');
+			throw new \PHPUnit_Framework_SkippedTestSuiteError('PDO MySQL extension not installed');
+
+		if (empty($_SERVER['MYSQL']))
+			throw new \PHPUnit_Framework_SkippedTestSuiteError('Not configured for MySQL');
 	}
 
 	protected function expect_syntax_error_exception()

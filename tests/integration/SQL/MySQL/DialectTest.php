@@ -10,6 +10,12 @@ use SQL\PDO\Connection;
  */
 class DialectTest extends \PHPUnit_Framework_TestCase
 {
+	public static function setupbeforeclass()
+	{
+		if (empty($_SERVER['MYSQL']))
+			throw new \PHPUnit_Framework_SkippedTestSuiteError('Not configured for MySQL');
+	}
+
 	/**
 	 * @var Connection
 	 */

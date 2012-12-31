@@ -15,7 +15,10 @@ class Execution_SQLiteTest extends Execution_TestCase
 		parent::setupbeforeclass();
 
 		if ( ! extension_loaded('pdo_sqlite'))
-			throw new PHPUnit_Framework_SkippedTestSuiteError('PDO SQLite extension not installed');
+			throw new \PHPUnit_Framework_SkippedTestSuiteError('PDO SQLite extension not installed');
+
+		if (empty($_SERVER['SQLITE']))
+			throw new \PHPUnit_Framework_SkippedTestSuiteError('Not configured for SQLite');
 	}
 
 	public function setup()
