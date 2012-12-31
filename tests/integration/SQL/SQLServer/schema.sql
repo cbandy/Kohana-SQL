@@ -2,9 +2,7 @@
 /**
  * Schema required for SQL Server tests.
  *
- * Change this to include the table_prefix, if desired.
- *
- * @package      RealDatabase
+ * @package      SQL
  * @subpackage   Microsoft SQL Server
  */
 
