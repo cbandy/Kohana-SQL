@@ -29,6 +29,7 @@ class Options extends Expression implements \ArrayAccess
 	public function __construct($values = array())
 	{
 		$this->values = $values;
+		array_walk($this->values, array($this, 'keyword'));
 		$this->parameters = array_values($this->values);
 	}
 
@@ -43,6 +44,7 @@ class Options extends Expression implements \ArrayAccess
 		if ($name === 'values')
 		{
 			$this->values = $value;
+			array_walk($this->values, array($this, 'keyword'));
 			$this->parameters = array_values($this->values);
 		}
 	}
@@ -57,6 +59,38 @@ class Options extends Expression implements \ArrayAccess
 		return implode(' ', $options);
 	}
 
+	/**
+	 * Wrap the value of certain options in an Expression.
+	 *
+	 * @param   mixed   $value  Option value
+	 * @param   string  $option Option name
+	 * @return  mixed|Expression
+	 */
+	protected function keyword(&$value, $option)
+	{
+		static $options_with_keyword_values = array(
+			'CHARACTER SET'     => TRUE,
+			'COLLATE'           => TRUE,
+			'DEFAULT CHARACTER SET' => TRUE,
+			'DEFAULT COLLATE'   => TRUE,
+			'ENGINE'            => TRUE,
+			'INSERT_METHOD'     => TRUE,
+			'PACK_KEYS'         => TRUE,
+			'ROW_FORMAT'        => TRUE,
+			'STORAGE ENGINE'    => TRUE,
+			'USING'             => TRUE,
+			'WITH PARSER'       => TRUE,
+		);
+
+		if (isset($options_with_keyword_values[strtoupper($option)])
+			AND ! $value instanceof Expression)
+		{
+			$value = new Expression($value);
+		}
+
+		return $value;
+	}
+
 	public function offsetExists($option)
 	{
 		return array_key_exists($option, $this->values);
@@ -69,7 +103,7 @@ class Options extends Expression implements \ArrayAccess
 
 	public function offsetSet($option, $value)
 	{
-		$this->values[$option] = $value;
+		$this->values[$option] = $this->keyword($value, $option);
 		$this->parameters = array_values($this->values);
 	}
 

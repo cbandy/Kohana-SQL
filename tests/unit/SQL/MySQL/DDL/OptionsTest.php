@@ -1,22 +1,30 @@
 <?php
 namespace SQL\MySQL\DDL;
 
+use SQL\Expression;
+
 /**
  * @package     SQL
  * @subpackage  MySQL
  * @author      Chris Bandy
+ *
+ * @covers  SQL\MySQL\DDL\Options::<protected>
  */
 class OptionsTest extends \PHPUnit_Framework_TestCase
 {
 	public function provider_constructor()
 	{
 		return array(
-			array(array(), '', array()),
-			array(array('ENGINE' => 'InnoDB'), 'ENGINE ?', array('InnoDB')),
+			array(array(), array(), '', array()),
+			array(
+				array('ENGINE' => 'InnoDB'),
+				array('ENGINE' => new Expression('InnoDB')),
+				'ENGINE ?', array(new Expression('InnoDB')),
+			),
 			array(
 				array('ENGINE' => 'InnoDB', 'OTHER' => 5),
-				'ENGINE ? OTHER ?',
-				array('InnoDB', 5),
+				array('ENGINE' => new Expression('InnoDB'), 'OTHER' => 5),
+				'ENGINE ? OTHER ?', array(new Expression('InnoDB'), 5),
 			),
 		);
 	}
@@ -28,14 +36,15 @@ class OptionsTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_constructor
 	 *
 	 * @param   array   $argument   Argument
+	 * @param   array   $values     Expected property
 	 * @param   string  $value
 	 * @param   array   $parameters
 	 */
-	public function test_constructor($argument, $value, $parameters)
+	public function test_constructor($argument, $values, $value, $parameters)
 	{
 		$options = new Options($argument);
 
-		$this->assertSame($argument, $options->values);
+		$this->assertEquals($values, $options->values);
 
 		$this->assertSame($value, (string) $options);
 		$this->assertEquals($parameters, $options->parameters);
@@ -61,15 +70,16 @@ class OptionsTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_constructor
 	 *
 	 * @param   array   $argument   Argument
+	 * @param   array   $values     Expected property
 	 * @param   string  $value
 	 * @param   array   $parameters
 	 */
-	public function test_values_assignment($argument, $value, $parameters)
+	public function test_values_assignment($argument, $values, $value, $parameters)
 	{
 		$options = new Options;
 		$options->values = $argument;
 
-		$this->assertSame($argument, $options->values);
+		$this->assertEquals($values, $options->values);
 
 		$this->assertSame($value, (string) $options);
 		$this->assertEquals($parameters, $options->parameters);
@@ -91,9 +101,9 @@ class OptionsTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function test_array_access_get()
 	{
-		$options = new Options(array('ENGINE' => 'InnoDB'));
+		$options = new Options(array('AUTO_INCREMENT' => 5));
 
-		$this->assertSame('InnoDB', $options['ENGINE']);
+		$this->assertSame(5, $options['AUTO_INCREMENT']);
 	}
 
 	/**
@@ -105,13 +115,15 @@ class OptionsTest extends \PHPUnit_Framework_TestCase
 		$options['AUTO_INCREMENT'] = 99;
 
 		$this->assertSame(99, $options['AUTO_INCREMENT']);
-		$this->assertSame(
-			array('ENGINE' => 'InnoDB', 'AUTO_INCREMENT' => 99),
+		$this->assertEquals(
+			array('ENGINE' => new Expression('InnoDB'), 'AUTO_INCREMENT' => 99),
 			$options->values
 		);
 
 		$this->assertSame('ENGINE ? AUTO_INCREMENT ?', (string) $options);
-		$this->assertSame(array('InnoDB', 99), $options->parameters);
+		$this->assertEquals(
+			array(new Expression('InnoDB'), 99), $options->parameters
+		);
 	}
 
 	/**
