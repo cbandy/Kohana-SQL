@@ -306,6 +306,8 @@ class Select extends Expression
 	/**
 	 * Set the number of rows to skip.
 	 *
+	 * [!!] SQL Server requires ORDER BY
+	 *
 	 * @param   integer $start  Number of rows
 	 * @return  $this
 	 */

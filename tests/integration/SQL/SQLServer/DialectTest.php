@@ -24,6 +24,11 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 
 	protected $table = 'kohana_test_table';
 
+	/**
+	 * @var string  Version of SQL Server
+	 */
+	protected $version;
+
 	protected function array_table_data($table, $columns, $data)
 	{
 		$compiler = new Compiler;
@@ -46,6 +51,9 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 		$config = json_decode($_SERVER['SQLSERVER'], TRUE);
 
 		$this->connection = new Connection($config);
+		$this->version = $this->connection
+			->execute_query("SELECT SERVERPROPERTY('productversion')")
+			->get();
 	}
 
 	/**
@@ -72,6 +80,37 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 
 		$this->setExpectedException('SQL\RuntimeException', 'Syntax', '42000');
 		$this->connection->execute_query(sprintf($statement, $cte_query));
+	}
+
+	/**
+	 * SELECT..OFFSET is available in SQL Server 2012 and later.
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_offset()
+	{
+		$this->array_table_data($this->table, array('value'), array(
+			array(40), array(30), array(20), array(10)
+		));
+
+		$statement = 'SELECT value FROM '.$this->table
+			.' ORDER BY id OFFSET 1 ROW';
+
+		if (version_compare($this->version, '11.0', '<'))
+		{
+			$this->setExpectedException(
+				'SQL\RuntimeException', 'Syntax', '42000'
+			);
+		}
+
+		$this->assertEquals(
+			array(
+				array('value' => 30),
+				array('value' => 20),
+				array('value' => 10),
+			),
+			$this->connection->execute_query($statement)->to_array()
+		);
 	}
 
 	/**
