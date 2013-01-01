@@ -58,8 +58,11 @@ class TestListener implements \PHPUnit_Framework_TestListener
 
 	public function endTest(Test $test, $time)
 	{
-		$this->assertAssertions($test, $time);
-		$this->assertCoversAnnotation($test, $time);
+		if ($test->getTestResultObject()->wasSuccessful())
+		{
+			$this->assertAssertions($test, $time);
+			$this->assertCoversAnnotation($test, $time);
+		}
 	}
 
 	public function startTestSuite(TestSuite $suite)
