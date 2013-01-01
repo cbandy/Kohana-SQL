@@ -409,76 +409,83 @@ class SetTest extends \PHPUnit_Framework_TestCase
 
 	public function provider_order_by()
 	{
-		$result[] = array(array(NULL), NULL, '(?)', $this->parameters);
+		$result[] = array(array(NULL), NULL, '(?)');
+		$result[] = array(array(NULL, 'any'), NULL, '(?)');
+		$result[] = array(array(NULL, new Expression('any')), NULL, '(?)');
+
 		$result[] = array(
-			array(NULL, 'any'), NULL,
-			'(?)', $this->parameters,
-		);
-		$result[] = array(
-			array(NULL, new Expression('any')), NULL,
-			'(?)', $this->parameters,
+			array('a'), array(new Column('a')),
+			'(?) ORDER BY :orderby',
 		);
 
-		$order_by = array(new Column('a'));
 		$result[] = array(
-			array('a'), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
+			array('a', 'b'),
+			array(new Expression('? B', array(new Column('a')))),
+			'(?) ORDER BY :orderby',
 		);
 
-		$order_by = array(new Expression('? B', array(new Column('a'))));
 		$result[] = array(
-			array('a', 'b'), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
-		);
-
-		$order_by = array(
-			new Expression('? ?', array(new Column('a'), new Expression('b'))),
-		);
-		$result[] = array(
-			array('a', new Expression('b')), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
-		);
-
-		$order_by = array(new Column('a'));
-		$result[] = array(
-			array(new Column('a')), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
-		);
-
-		$order_by = array(new Expression('? B', array(new Column('a'))));
-		$result[] = array(
-			array(new Column('a'), 'b'), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
-		);
-
-		$order_by = array(
-			new Expression('? ?', array(new Column('a'), new Expression('b'))),
-		);
-		$result[] = array(
-			array(new Column('a'), new Expression('b')), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
-		);
-
-		$order_by = array(new Expression('a'));
-		$result[] = array(
-			array(new Expression('a')), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
-		);
-
-		$order_by = array(new Expression('? B', array(new Expression('a'))));
-		$result[] = array(
-			array(new Expression('a'), 'b'), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
-		);
-
-		$order_by = array(
-			new Expression(
-				'? ?', array(new Expression('a'), new Expression('b'))
+			array('a', new Expression('b')),
+			array(
+				new Expression(
+					'? ?', array(new Column('a'), new Expression('b'))
+				),
 			),
+			'(?) ORDER BY :orderby',
+		);
+
+		$result[] = array(
+			array(new Column('a')), array(new Column('a')),
+			'(?) ORDER BY :orderby',
+		);
+
+		$result[] = array(
+			array(new Column('a'), 'b'),
+			array(new Expression('? B', array(new Column('a')))),
+			'(?) ORDER BY :orderby',
+		);
+
+		$result[] = array(
+			array(new Column('a'), new Expression('b')),
+			array(
+				new Expression(
+					'? ?', array(new Column('a'), new Expression('b'))
+				),
+			),
+			'(?) ORDER BY :orderby',
+		);
+
+		$result[] = array(
+			array(new Expression('a')), array(new Expression('a')),
+			'(?) ORDER BY :orderby',
+		);
+
+		$result[] = array(
+			array(new Expression('a'), 'b'),
+			array(new Expression('? B', array(new Expression('a')))),
+			'(?) ORDER BY :orderby',
+		);
+
+		$result[] = array(
+			array(new Expression('a'), new Expression('b')),
+			array(
+				new Expression(
+					'? ?', array(new Expression('a'), new Expression('b'))
+				),
+			),
+			'(?) ORDER BY :orderby',
+		);
+
+		$result[] = array(array(1), array(1), '(?) ORDER BY :orderby');
+		$result[] = array(
+			array(1, 'a'),
+			array(new Expression('? A', array(1))),
+			'(?) ORDER BY :orderby',
 		);
 		$result[] = array(
-			array(new Expression('a'), new Expression('b')), $order_by,
-			'(?) ORDER BY :orderby', array(':orderby' => $order_by),
+			array(1, new Expression('a')),
+			array(new Expression('? ?', array(1, new Expression('a')))),
+			'(?) ORDER BY :orderby',
 		);
 
 		return $result;
@@ -490,11 +497,10 @@ class SetTest extends \PHPUnit_Framework_TestCase
 	 * @dataProvider    provider_order_by
 	 *
 	 * @param   array   $arguments  Arguments
-	 * @param   array   $order_by   Expected
+	 * @param   array   $order_by   Expected property
 	 * @param   string  $value
-	 * @param   array   $parameters
 	 */
-	public function test_order_by($arguments, $order_by, $value, $parameters)
+	public function test_order_by($arguments, $order_by, $value)
 	{
 		$set = new Set(new Expression('a'));
 
@@ -506,7 +512,9 @@ class SetTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($value, (string) $set);
 		$this->assertEquals(
 			array_merge(
-				$this->parameters, array(new Expression('a')), $parameters
+				$this->parameters,
+				array(new Expression('a')),
+				array(':orderby' => $order_by)
 			),
 			$set->parameters
 		);

@@ -643,6 +643,17 @@ class SelectTest extends \PHPUnit_Framework_TestCase
 				)),
 				'SELECT * ORDER BY :orderby',
 			),
+
+			array(array(1), array(1), 'SELECT * ORDER BY :orderby'),
+			array(
+				array(1, 'a'), array(new Expression('? A', array(1))),
+				'SELECT * ORDER BY :orderby',
+			),
+			array(
+				array(1, new Expression('a')),
+				array(new Expression('? ?', array(1, new Expression('a')))),
+				'SELECT * ORDER BY :orderby',
+			),
 		);
 	}
 

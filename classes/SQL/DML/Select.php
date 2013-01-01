@@ -319,10 +319,11 @@ class Select extends Expression
 	}
 
 	/**
-	 * Append a column or expression by which rows should be sorted.
+	 * Append a column or expression by which rows should be sorted. An integer
+	 * refers to the position of an output column, starting with one.
 	 *
-	 * @param   array|string|Expression|Identifier  $column     Converted to Column or NULL to reset
-	 * @param   string|Expression                   $direction  Direction of sort
+	 * @param   array|integer|string|Expression|Identifier  $column     Converted to Column or NULL to reset
+	 * @param   string|Expression                           $direction  Direction of sort
 	 * @return  $this
 	 */
 	public function order_by($column, $direction = NULL)
@@ -333,7 +334,8 @@ class Select extends Expression
 		}
 		else
 		{
-			if ( ! $column instanceof Expression
+			if ( ! is_integer($column)
+				AND ! $column instanceof Expression
 				AND ! $column instanceof Identifier)
 			{
 				$column = new Column($column);
