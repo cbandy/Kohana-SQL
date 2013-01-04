@@ -83,11 +83,59 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
+	 * DELETE..OUTPUT requires columns to be qualified with the state of the row
+	 * from which they originate.
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_delete_output()
+	{
+		$this->array_table_data($this->table, array('value'), array(
+			array(40), array(30), array(20), array(10)
+		));
+
+		$this->assertEquals(
+			array(array('value' => 40), array('value' => 30)),
+			$this->connection->execute_query(
+				'DELETE FROM '.$this->table
+				.' OUTPUT DELETED.value WHERE value > 25'
+			)->to_array()
+		);
+
+		$this->setExpectedException('SQL\RuntimeException', 'column', '42S22');
+		$this->connection->execute_query(
+			'DELETE FROM '.$this->table.' OUTPUT value WHERE value > 5'
+		);
+	}
+
+	/**
+	 * INSERT..OUTPUT requires columns to be qualified with the state of the row
+	 * from which they originate.
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_insert_output()
+	{
+		$this->assertEquals(
+			array(array('value' => 20), array('value' => 30)),
+			$this->connection->execute_query(
+				'INSERT INTO '.$this->table.' (value) OUTPUT INSERTED.value'
+				.' VALUES (20), (30)'
+			)->to_array()
+		);
+
+		$this->setExpectedException('SQL\RuntimeException', 'column', '42S22');
+		$this->connection->execute_query(
+			'INSERT INTO '.$this->table.' (value) OUTPUT value VALUES (10)'
+		);
+	}
+
+	/**
 	 * SELECT..OFFSET is available in SQL Server 2012 and later.
 	 *
 	 * @covers  PDO::query
 	 */
-	public function test_offset()
+	public function test_select_offset()
 	{
 		$this->array_table_data($this->table, array('value'), array(
 			array(40), array(30), array(20), array(10)
@@ -119,7 +167,7 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 	 *
 	 * @covers  PDO::query
 	 */
-	public function test_offset_emulation_cte()
+	public function test_select_offset_emulation_cte()
 	{
 		$this->array_table_data($this->table, array('value'), array(
 			array(40), array(30), array(20), array(10)
@@ -158,7 +206,7 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 	 *
 	 * @covers  PDO::query
 	 */
-	public function test_offset_emulation_subquery()
+	public function test_select_offset_emulation_subquery()
 	{
 		$this->array_table_data($this->table, array('value'), array(
 			array(40), array(30), array(20), array(10)
@@ -189,6 +237,36 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 				array('value' => 20, 'num' => 3),
 			),
 			$this->connection->execute_query($statement)->to_array()
+		);
+	}
+
+	/**
+	 * UPDATE..OUTPUT requires columns to be qualified with the state of the row
+	 * from which they originate.
+	 *
+	 * @covers  PDO::query
+	 */
+	public function test_update_output()
+	{
+		$this->array_table_data($this->table, array('value'), array(
+			array(40), array(30), array(20), array(10)
+		));
+
+		$this->assertEquals(
+			array(
+				array('before' => 40, 'after' => 99),
+				array('before' => 30, 'after' => 99),
+			),
+			$this->connection->execute_query(
+				'UPDATE '.$this->table.' SET value = 99'
+				.' OUTPUT DELETED.value AS before, INSERTED.value AS after'
+				.' WHERE value > 25'
+			)->to_array()
+		);
+
+		$this->setExpectedException('SQL\RuntimeException', 'column', '42S22');
+		$this->connection->execute_query(
+			'UPDATE '.$this->table.' SET value = 99 OUTPUT value AS after'
 		);
 	}
 }
