@@ -2,10 +2,12 @@
 namespace SQL;
 
 /**
+ * SQL-92
+ *
  * @package     SQL
  *
  * @author      Chris Bandy
- * @copyright   (c) 2012 Chris Bandy
+ * @copyright   (c) 2012-2013 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  */
 interface Transactions
@@ -16,48 +18,39 @@ interface Transactions
 	const SERIALIZABLE      = 'SERIALIZABLE';
 
 	/**
-	 * Start a transaction with the current isolation level or set a savepoint
-	 * in the current transaction.
+	 * Commit the current transaction.
 	 *
 	 * @throws  RuntimeException
-	 * @param   string  $name   Savepoint name or NULL to have one generated
-	 * @return  string  Savepoint name
-	 */
-	public function begin($name = NULL);
-
-	/**
-	 * Commit the current transaction or release a savepoint.
-	 *
-	 * @throws  RuntimeException
-	 * @param   string  $name   Savepoint name or NULL to commit the transaction
 	 * @return  void
 	 */
-	public function commit($name = NULL);
+	public function commit();
 
 	/**
-	 * Abort the current transaction or revert to a savepoint.
-	 *
-	 * @throws  RuntimeException
-	 * @param   string  $name   Savepoint name or NULL to abort the transaction
-	 * @return  void
-	 */
-	public function rollback($name = NULL);
-
-	/**
-	 * Set a savepoint in the current transaction.
-	 *
-	 * @throws  RuntimeException
-	 * @param   string  $name   Savepoint name or NULL to have one generated
-	 * @return  string  Savepoint name
-	 */
-	public function savepoint($name = NULL);
-
-	/**
-	 * Start a transaction, optionally setting the isolation level.
+	 * Set the isolation level for subsequent transactions.
 	 *
 	 * @throws  RuntimeException
 	 * @param   string  $level  Isolation level
-	 * @return  string  Transaction name
+	 * @return  void
 	 */
-	public function start_transaction($level = NULL);
+	public function isolation_level($level);
+	// MySQL: SET SESSION TRANSACTION ISOLATION LEVEL {level}; http://dev.mysql.com/doc/en/set-transaction.html
+	// PostgreSQL: SET SESSION CHARACTERISTICS AS TRANSACTION {level}; http://www.postgresql.org/docs/current/static/sql-set-transaction.html
+	// SQL Server: SET TRANSACTION ISOLATION LEVEL {level}; http://msdn.microsoft.com/en-us/library/ms173763.aspx
+	// SQLite: PRAGMA read_uncommitted = 1; http://www.sqlite.org/pragma.html#pragma_read_uncommitted
+
+	/**
+	 * Abort the current transaction.
+	 *
+	 * @throws  RuntimeException
+	 * @return  void
+	 */
+	public function rollback();
+
+	/**
+	 * Start a transaction.
+	 *
+	 * @throws  RuntimeException
+	 * @return  void
+	 */
+	public function start();
 }
