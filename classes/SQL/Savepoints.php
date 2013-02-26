@@ -10,7 +10,7 @@ namespace SQL;
  * @copyright   (c) 2013 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  */
-interface Savepoints
+interface Savepoints extends Transactions
 {
 	/**
 	 * Destroy a savepoint in the current transaction.
