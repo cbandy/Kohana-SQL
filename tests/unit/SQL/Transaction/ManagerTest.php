@@ -55,21 +55,6 @@ class Transaction_ManagerTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers  SQL\Transaction_Manager::isolation_level
-	 */
-	public function test_isolation_level()
-	{
-		$connection = $this->getMockForAbstractClass('SQL\Transactions');
-		$manager = new Transaction_Manager($connection);
-		$level = new \stdClass;
-
-		$connection->expects($this->once())->method('isolation_level')
-			->with($this->identicalTo($level));
-
-		$this->assertNull($manager->isolation_level($level));
-	}
-
-	/**
 	 * @covers  SQL\Transaction_Manager::rollback
 	 * @covers  SQL\Transaction_Manager::reset
 	 */

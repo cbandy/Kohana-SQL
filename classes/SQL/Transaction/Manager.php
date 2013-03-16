@@ -54,11 +54,6 @@ class Transaction_Manager implements Transactions
 		return 'kohana_txn_'.++$this->markers;
 	}
 
-	public function isolation_level($level)
-	{
-		$this->connection->isolation_level($level);
-	}
-
 	protected function reset()
 	{
 		$this->markers = 0;
