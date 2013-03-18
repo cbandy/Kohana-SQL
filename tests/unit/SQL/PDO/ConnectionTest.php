@@ -14,6 +14,16 @@ class ConnectionTest extends \PHPUnit_Framework_TestCase
 			throw new \PHPUnit_Framework_SkippedTestSuiteError('PDO extension not installed');
 	}
 
+	/**
+	 * @coversNothing
+	 */
+	public function test_interfaces()
+	{
+		$class = new \ReflectionClass('SQL\PDO\Connection');
+
+		$this->assertTrue($class->implementsInterface('SQL\Transactions'));
+	}
+
 	public function provider_constructor_generates_name()
 	{
 		return array(

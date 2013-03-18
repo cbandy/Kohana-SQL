@@ -5,6 +5,7 @@ use PDO;
 use PDOException;
 use SQL\Connection as SQL_Connection;
 use SQL\RuntimeException;
+use SQL\Transactions;
 
 /**
  * An SQL\Connection using PDO.
@@ -31,7 +32,7 @@ use SQL\RuntimeException;
  * @copyright   (c) 2010-2012 Chris Bandy
  * @license     http://www.opensource.org/licenses/isc-license.txt
  */
-class Connection extends SQL_Connection
+class Connection extends SQL_Connection implements Transactions
 {
 	/**
 	 * @var PDO
@@ -74,6 +75,20 @@ class Connection extends SQL_Connection
 		if ( ! isset($this->config['username']))
 		{
 			$this->config['username'] = NULL;
+		}
+	}
+
+	public function commit()
+	{
+		$this->connection OR $this->connect();
+
+		try
+		{
+			$this->connection->commit();
+		}
+		catch (PDOException $e)
+		{
+			throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
 		}
 	}
 
@@ -167,5 +182,33 @@ class Connection extends SQL_Connection
 			return NULL;
 
 		return new Result_Seekable($statement);
+	}
+
+	public function rollback()
+	{
+		$this->connection OR $this->connect();
+
+		try
+		{
+			$this->connection->rollBack();
+		}
+		catch (PDOException $e)
+		{
+			throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+	}
+
+	public function start()
+	{
+		$this->connection OR $this->connect();
+
+		try
+		{
+			$this->connection->beginTransaction();
+		}
+		catch (PDOException $e)
+		{
+			throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
 	}
 }
