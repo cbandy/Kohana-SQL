@@ -4,15 +4,31 @@ php:
  - 5.3
  - 5.4
 
-env: MYSQL='{"dsn":"mysql:dbname=kohana","username":"root"}' POSTGRESQL='{"dsn":"pgsql:dbname=kohana"}' SQLITE='{"dsn":"sqlite:kohana.sqlite3"}'
+env:
+  global:
+    - MYSQL='{"dsn":"mysql:dbname=kohana","username":"root"}'
+    - POSTGRESQL='{"dsn":"pgsql:dbname=kohana"}'
+    - SQLITE='{"dsn":"sqlite:kohana.sqlite3"}'
+  matrix:
+    - COMPOSER=
+    - COMPOSER=composer.json
+
+before_install:
+  - test -z "$COMPOSER" || composer install --dev
+  - test -n "$COMPOSER" || pear config-set auto_discover 1
+  - test -n "$COMPOSER" || pear install --nodeps pear.phpunit.de/DbUnit
 
 before_script:
- - pear config-set auto_discover 1
- - pear install --nodeps pear.phpunit.de/DbUnit
  - mysql -e 'CREATE DATABASE kohana'
  - mysql -B kohana < tests/integration/SQL/MySQL/schema.sql
  - createdb kohana
  - psql -n kohana < tests/integration/SQL/PostgreSQL/schema.sql
  - sqlite3 kohana.sqlite3 < tests/integration/SQL/SQLite/schema.sql
 
-script: "composer validate && phpunit"
+script: >
+  composer validate &&
+  if [ "$COMPOSER" ] ; then
+    vendor/bin/phpunit --bootstrap vendor/autoload.php
+  else
+    phpunit
+  fi
