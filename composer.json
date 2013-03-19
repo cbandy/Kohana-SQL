@@ -6,5 +6,9 @@
 	"version": "v0.1.0",
 	"require": {
 		"php": ">=5.3.9"
+	},
+	"require-dev": {
+		"phpunit/dbunit": "*",
+		"phpunit/phpunit": ">=3.6"
 	}
 }
