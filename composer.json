@@ -10,5 +10,8 @@
 	"require-dev": {
 		"phpunit/dbunit": "*",
 		"phpunit/phpunit": ">=3.6"
+	},
+	"autoload": {
+		"psr-0": { "SQL": "classes/" }
 	}
 }
