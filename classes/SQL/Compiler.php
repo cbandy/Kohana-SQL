@@ -179,6 +179,30 @@ class Compiler
 	}
 
 	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   array   $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_array($value)
+	{
+		return 'ARRAY['
+			.implode(', ', array_map(array($this, 'quote_literal'), $value))
+			.']';
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   boolean $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_boolean($value)
+	{
+		return $value ? "'1'" : "'0'";
+	}
+
+	/**
 	 * Quote a column identifier for inclusion in an SQL statement. Adds the
 	 * table prefix unless the namespace is an [Identifier].
 	 *
@@ -263,6 +287,17 @@ class Compiler
 	}
 
 	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   float   $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_float($value)
+	{
+		return sprintf('%F', $value);
+	}
+
+	/**
 	 * Quote an identifier for inclusion in an SQL statement.
 	 *
 	 * @param   array|string|Identifier $value  Identifier to quote
@@ -313,6 +348,17 @@ class Compiler
 	/**
 	 * Quote a literal value for inclusion in an SQL statement.
 	 *
+	 * @param   integer $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_integer($value)
+	{
+		return (string) $value;
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
 	 * @param   mixed   $value  Literal value to quote
 	 * @return  string  SQL fragment
 	 */
@@ -327,34 +373,39 @@ class Compiler
 		{
 			$value = 'NULL';
 		}
-		elseif ($value === TRUE)
+		elseif (is_bool($value))
 		{
-			$value = "'1'";
-		}
-		elseif ($value === FALSE)
-		{
-			$value = "'0'";
+			$value = $this->quote_boolean($value);
 		}
 		elseif (is_int($value))
 		{
-			$value = (string) $value;
+			$value = $this->quote_integer($value);
 		}
 		elseif (is_float($value))
 		{
-			$value = sprintf('%F', $value);
+			$value = $this->quote_float($value);
 		}
 		elseif (is_array($value))
 		{
-			$value = 'ARRAY['
-				.implode(', ', array_map(array($this, __FUNCTION__), $value))
-				.']';
+			$value = $this->quote_array($value);
 		}
 		else
 		{
-			$value = "'$value'";
+			$value = $this->quote_string($value);
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   string  $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_string($value)
+	{
+		return "'$value'";
 	}
 
 	/**

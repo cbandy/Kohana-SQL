@@ -202,6 +202,144 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
+	public function provider_quote_array()
+	{
+		return array(
+			array(array(), 'ARRAY[]'),
+			array(array(NULL), 'ARRAY[NULL]'),
+			array(array(FALSE), "ARRAY['0']"),
+			array(array(TRUE), "ARRAY['1']"),
+
+			array(array(51678), 'ARRAY[51678]'),
+			array(array(12.345), 'ARRAY[12.345000]'),
+
+			array(array('string'), "ARRAY['string']"),
+			array(array("multiline\nstring"), "ARRAY['multiline\nstring']"),
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_array
+	 *
+	 * @dataProvider    provider_quote_array
+	 *
+	 * @param   array   $value      Argument
+	 * @param   string  $expected
+	 */
+	public function test_quote_array($value, $expected)
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame($expected, $compiler->quote_array($value));
+	}
+
+	public function provider_quote_boolean()
+	{
+		return array(
+			array(NULL,  "'0'"),
+			array(FALSE, "'0'"),
+			array(TRUE,  "'1'"),
+			array(0,     "'0'"),
+			array(-1,    "'1'"),
+			array(51678, "'1'"),
+			array(12.345, "'1'"),
+			array('string', "'1'"),
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_boolean
+	 *
+	 * @dataProvider    provider_quote_boolean
+	 *
+	 * @param   mixed   $value      Argument
+	 * @param   string  $expected
+	 */
+	public function test_quote_boolean($value, $expected)
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame($expected, $compiler->quote_boolean($value));
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_float
+	 */
+	public function test_quote_float()
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame('0.000010', $compiler->quote_float(0.00001));
+		$this->assertSame('12.345000', $compiler->quote_float(12.345));
+		$this->assertSame('1234567.890000', $compiler->quote_float(1234567.89));
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_float
+	 */
+	public function test_quote_large_float()
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame('1234500000.000000', $compiler->quote_float(1.2345E9));
+		$this->assertSame(
+			'1234499999999999868928.000000', $compiler->quote_float(1.2345E21)
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_float
+	 */
+	public function test_quote_tiny_float()
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame('0.000000', $compiler->quote_float(0.0000005));
+		$this->assertSame('0.000000', $compiler->quote_float(1.2345E-9));
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_integer
+	 */
+	public function test_quote_integer()
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame('1234', $compiler->quote_integer(1234));
+		$this->assertSame('51678', $compiler->quote_integer(51678));
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_string
+	 */
+	public function test_quote_string()
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame("'string'", $compiler->quote_string('string'));
+		$this->assertSame(
+			"'multiline\nstring'", $compiler->quote_string("multiline\nstring")
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_string
+	 */
+	public function test_quote_string_object()
+	{
+		$compiler = new Compiler;
+
+		$object = $this->getMock('stdClass', array('__toString'));
+		$object
+			->expects($this->once())
+			->method('__toString')
+			->will($this->returnValue('object__toString'));
+
+		$this->assertSame(
+			"'object__toString'", $compiler->quote_string($object)
+		);
+	}
+
 	public function provider_quote_literal()
 	{
 		return array
