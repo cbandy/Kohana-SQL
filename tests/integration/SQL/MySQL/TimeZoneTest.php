@@ -8,6 +8,8 @@ use SQL\PDO\Connection;
  * @subpackage  MySQL
  * @author      Chris Bandy
  *
+ * @link http://dev.mysql.com/doc/en/time-zone-support.html
+ *
  * DATE, 1000-01-01 to 9999-12-31
  * DATETIME, 1000-01-01 00:00:00 to 9999-12-31 23:59:59
  * TIME, -838:59:59 to 838:59:59
@@ -32,6 +34,16 @@ class TimeZoneTest extends \PHPUnit_Framework_TestCase
 
 	protected $table = 'kohana_temporal_test';
 
+	/**
+	 * @return  boolean Whether or not time zone information has been loaded
+	 */
+	protected function has_olson_time_zones()
+	{
+		return (bool) $this->connection->execute_query(
+			"SELECT CONVERT_TZ('1990-01-01 00:00:00', 'GMT', 'America/Phoenix')"
+		)->get();
+	}
+
 	public function setup()
 	{
 		$config = json_decode($_SERVER['MYSQL'], TRUE);
@@ -46,8 +58,15 @@ class TimeZoneTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @coversNothing
 	 */
-	public function test_session_time_zone_allows_olson()
+	public function test_session_time_zone_allows_olson_when_loaded()
 	{
+		if ( ! $this->has_olson_time_zones())
+		{
+			$this->setExpectedException(
+				'SQL\RuntimeException', 'Unknown or incorrect time zone', 'HY000'
+			);
+		}
+
 		$this->connection->execute_query("SET SESSION time_zone = 'America/Phoenix'");
 		$this->connection->execute_command(
 			"INSERT INTO $this->table (ts) VALUES ('1990-01-01 00:00:00')"
@@ -68,6 +87,9 @@ class TimeZoneTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function test_session_time_zone_does_not_follow_sql_standard()
 	{
+		if ( ! $this->has_olson_time_zones())
+			return $this->markTestIncomplete();
+
 		$this->connection->execute_query("SET SESSION time_zone = 'America/Phoenix'");
 		$this->connection->execute_command(
 			"INSERT INTO $this->table (ts) VALUES ('1990-01-01 00:00:00')"
@@ -85,6 +107,9 @@ class TimeZoneTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function test_datetime_ignores_literal_time_zone()
 	{
+		if ( ! $this->has_olson_time_zones())
+			return $this->markTestIncomplete();
+
 		$this->connection->execute_command("SET SESSION time_zone = 'America/Phoenix'");
 		$this->connection->execute_command(
 			"INSERT INTO $this->table (dt) VALUES ('1990-01-01 00:00:00-04:00')"
@@ -101,6 +126,9 @@ class TimeZoneTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function test_datetime_ignores_session_time_zone()
 	{
+		if ( ! $this->has_olson_time_zones())
+			return $this->markTestIncomplete();
+
 		$this->connection->execute_command("SET SESSION time_zone = 'America/Phoenix'");
 		$this->connection->execute_command(
 			"INSERT INTO $this->table (dt) VALUES ('1990-01-01 00:00:00-04:00')"
@@ -118,6 +146,9 @@ class TimeZoneTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function test_timestamp_ignores_literal_time_zone()
 	{
+		if ( ! $this->has_olson_time_zones())
+			return $this->markTestIncomplete();
+
 		$this->connection->execute_command("SET SESSION time_zone = 'America/Phoenix'");
 		$this->connection->execute_command(
 			"INSERT INTO $this->table (ts) VALUES ('1990-01-01 00:00:00-04:00')"
