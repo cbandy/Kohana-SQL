@@ -405,7 +405,7 @@ class Compiler
 	 */
 	public function quote_string($value)
 	{
-		return "'$value'";
+		return "'".strtr($value, array("'" => "''"))."'";
 	}
 
 	/**

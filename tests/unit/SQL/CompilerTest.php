@@ -320,6 +320,15 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame(
 			"'multiline\nstring'", $compiler->quote_string("multiline\nstring")
 		);
+		$this->assertSame(
+			"'single''quote'", $compiler->quote_string("single'quote")
+		);
+		$this->assertSame(
+			"'two''''quotes'", $compiler->quote_string("two''quotes")
+		);
+		$this->assertSame(
+			"'double\"quote'", $compiler->quote_string('double"quote')
+		);
 	}
 
 	/**
@@ -355,6 +364,8 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 
 			array('string', "'string'"),
 			array("multiline\nstring", "'multiline\nstring'"),
+			array("single'quote", "'single''quote'"),
+			array('double"quote', "'double\"quote'"),
 
 			array(array(), 'ARRAY[]'),
 			array(array(NULL), 'ARRAY[NULL]'),
@@ -366,6 +377,8 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 
 			array(array('string'), "ARRAY['string']"),
 			array(array("multiline\nstring"), "ARRAY['multiline\nstring']"),
+			array(array("single'quote"), "ARRAY['single''quote']"),
+			array(array('double"quote'), "ARRAY['double\"quote']"),
 
 			array(new Literal(NULL), 'NULL'),
 			array(new Literal(FALSE), "'0'"),
@@ -378,6 +391,8 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 
 			array(new Literal('string'), "'string'"),
 			array(new Literal("multiline\nstring"), "'multiline\nstring'"),
+			array(new Literal("single'quote"), "'single''quote'"),
+			array(new Literal('double"quote'), "'double\"quote'"),
 
 			array(new Literal(array()), 'ARRAY[]'),
 			array(new Literal(array(NULL)), 'ARRAY[NULL]'),
@@ -392,6 +407,8 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 				new Literal(array("multiline\nstring")),
 				"ARRAY['multiline\nstring']"
 			),
+			array(new Literal(array("single'quote")), "ARRAY['single''quote']"),
+			array(new Literal(array('double"quote')), "ARRAY['double\"quote']"),
 		);
 	}
 
