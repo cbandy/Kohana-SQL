@@ -294,7 +294,7 @@ class Compiler
 	 */
 	public function quote_float($value)
 	{
-		return sprintf('%F', $value);
+		return sprintf('%E', $value);
 	}
 
 	/**

@@ -211,7 +211,7 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(array(TRUE), "ARRAY['1']"),
 
 			array(array(51678), 'ARRAY[51678]'),
-			array(array(12.345), 'ARRAY[12.345000]'),
+			array(array(12.345), 'ARRAY[1.234500E+1]'),
 
 			array(array('string'), "ARRAY['string']"),
 			array(array("multiline\nstring"), "ARRAY['multiline\nstring']"),
@@ -269,9 +269,10 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 	{
 		$compiler = new Compiler;
 
-		$this->assertSame('0.000010', $compiler->quote_float(0.00001));
-		$this->assertSame('12.345000', $compiler->quote_float(12.345));
-		$this->assertSame('1234567.890000', $compiler->quote_float(1234567.89));
+		$this->assertSame('1.000000E-5', $compiler->quote_float(0.00001));
+		$this->assertSame('1.000000E+0', $compiler->quote_float(1));
+		$this->assertSame('1.234500E+1', $compiler->quote_float(12.345));
+		$this->assertSame('1.234568E+6', $compiler->quote_float(1234567.89));
 	}
 
 	/**
@@ -281,10 +282,8 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 	{
 		$compiler = new Compiler;
 
-		$this->assertSame('1234500000.000000', $compiler->quote_float(1.2345E9));
-		$this->assertSame(
-			'1234499999999999868928.000000', $compiler->quote_float(1.2345E21)
-		);
+		$this->assertSame('1.234500E+9', $compiler->quote_float(1.2345E9));
+		$this->assertSame('1.234500E+21', $compiler->quote_float(1.2345E21));
 	}
 
 	/**
@@ -294,8 +293,8 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 	{
 		$compiler = new Compiler;
 
-		$this->assertSame('0.000000', $compiler->quote_float(0.0000005));
-		$this->assertSame('0.000000', $compiler->quote_float(1.2345E-9));
+		$this->assertSame('5.000000E-7', $compiler->quote_float(0.0000005));
+		$this->assertSame('1.234500E-9', $compiler->quote_float(1.2345E-9));
 	}
 
 	/**
@@ -360,7 +359,7 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(0, '0'),
 			array(-1, '-1'),
 			array(51678, '51678'),
-			array(12.345, '12.345000'),
+			array(12.345, '1.234500E+1'),
 
 			array('string', "'string'"),
 			array("multiline\nstring", "'multiline\nstring'"),
@@ -373,7 +372,7 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(array(TRUE), "ARRAY['1']"),
 
 			array(array(51678), 'ARRAY[51678]'),
-			array(array(12.345), 'ARRAY[12.345000]'),
+			array(array(12.345), 'ARRAY[1.234500E+1]'),
 
 			array(array('string'), "ARRAY['string']"),
 			array(array("multiline\nstring"), "ARRAY['multiline\nstring']"),
@@ -387,7 +386,7 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(new Literal(0), '0'),
 			array(new Literal(-1), '-1'),
 			array(new Literal(51678), '51678'),
-			array(new Literal(12.345), '12.345000'),
+			array(new Literal(12.345), '1.234500E+1'),
 
 			array(new Literal('string'), "'string'"),
 			array(new Literal("multiline\nstring"), "'multiline\nstring'"),
@@ -400,7 +399,7 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(new Literal(array(TRUE)), "ARRAY['1']"),
 
 			array(new Literal(array(51678)), 'ARRAY[51678]'),
-			array(new Literal(array(12.345)), 'ARRAY[12.345000]'),
+			array(new Literal(array(12.345)), 'ARRAY[1.234500E+1]'),
 
 			array(new Literal(array('string')), "ARRAY['string']"),
 			array(
