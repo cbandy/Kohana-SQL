@@ -27,7 +27,8 @@ class TestListener implements \PHPUnit_Framework_TestListener
 
 	protected function assertAssertions(TestCase $test, $time)
 	{
-		if ($test->getNumAssertions() <= 0)
+		if ($test->getStatus() === \PHPUnit_Runner_BaseTestRunner::STATUS_PASSED
+			&& $test->getNumAssertions() <= 0)
 		{
 			$test->getTestResultObject()->addFailure(
 				$test,
