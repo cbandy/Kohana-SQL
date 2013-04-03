@@ -257,6 +257,17 @@ class Compiler
 	}
 
 	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   DateTime    $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_datetime($value)
+	{
+		return $value->format("'Y-m-d H:i:s.uP'");
+	}
+
+	/**
 	 * Quote an expression's parameters for inclusion in an SQL statement.
 	 *
 	 * @param   Expression  $value  Expression to quote
@@ -374,6 +385,8 @@ class Compiler
 
 		if (is_object($value))
 		{
+			if ($value instanceof \DateTime)
+				return $this->quote_datetime($value);
 		}
 		else
 		{

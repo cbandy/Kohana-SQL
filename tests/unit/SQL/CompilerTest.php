@@ -262,6 +262,45 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($expected, $compiler->quote_boolean($value));
 	}
 
+	public function provider_quote_datetime()
+	{
+		return array(
+			array(
+				new \DateTime('1990-05-27 14:23:57Z'),
+				"'1990-05-27 14:23:57.000000+00:00'"
+			),
+			array(
+				new \DateTime('1990-05-27 14:23:57.5-9'),
+				"'1990-05-27 14:23:57.500000-09:00'"
+			),
+			array(
+				new \DateTime('1990-05-27 14:23:57', new \DateTimeZone('UTC')),
+				"'1990-05-27 14:23:57.000000+00:00'"
+			),
+			array(
+				new \DateTime(
+					'1990-05-27 14:23:57', new \DateTimeZone('Europe/Berlin')
+				),
+				"'1990-05-27 14:23:57.000000+02:00'"
+			),
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_datetime
+	 *
+	 * @dataProvider    provider_quote_datetime
+	 *
+	 * @param   DateTime    $value      Argument
+	 * @param   string      $expected
+	 */
+	public function test_quote_datetime($value, $expected)
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame($expected, $compiler->quote_datetime($value));
+	}
+
 	/**
 	 * @covers  SQL\Compiler::quote_float
 	 */
@@ -366,6 +405,11 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array("single'quote", "'single''quote'"),
 			array('double"quote', "'double\"quote'"),
 
+			array(
+				new \DateTime('1990-05-27 14:23:57.8-9'),
+				"'1990-05-27 14:23:57.800000-09:00'"
+			),
+
 			array(array(), 'ARRAY[]'),
 			array(array(NULL), 'ARRAY[NULL]'),
 			array(array(FALSE), "ARRAY['0']"),
@@ -378,6 +422,11 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(array("multiline\nstring"), "ARRAY['multiline\nstring']"),
 			array(array("single'quote"), "ARRAY['single''quote']"),
 			array(array('double"quote'), "ARRAY['double\"quote']"),
+
+			array(
+				array(new \DateTime('1990-05-27 14:23:57.8-9')),
+				"ARRAY['1990-05-27 14:23:57.800000-09:00']"
+			),
 
 			array(new Literal(NULL), 'NULL'),
 			array(new Literal(FALSE), "'0'"),
@@ -392,6 +441,11 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			array(new Literal("multiline\nstring"), "'multiline\nstring'"),
 			array(new Literal("single'quote"), "'single''quote'"),
 			array(new Literal('double"quote'), "'double\"quote'"),
+
+			array(
+				new Literal(new \DateTime('1990-05-27 14:23:57.8-9')),
+				"'1990-05-27 14:23:57.800000-09:00'"
+			),
 
 			array(new Literal(array()), 'ARRAY[]'),
 			array(new Literal(array(NULL)), 'ARRAY[NULL]'),
@@ -408,6 +462,11 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			),
 			array(new Literal(array("single'quote")), "ARRAY['single''quote']"),
 			array(new Literal(array('double"quote')), "ARRAY['double\"quote']"),
+
+			array(
+				new Literal(array(new \DateTime('1990-05-27 14:23:57.8-9'))),
+				"ARRAY['1990-05-27 14:23:57.800000-09:00']"
+			),
 		);
 	}
 
