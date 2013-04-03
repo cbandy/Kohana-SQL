@@ -370,31 +370,27 @@ class Compiler
 		}
 
 		if ($value === NULL)
+			return 'NULL';
+
+		if (is_object($value))
 		{
-			$value = 'NULL';
-		}
-		elseif (is_bool($value))
-		{
-			$value = $this->quote_boolean($value);
-		}
-		elseif (is_int($value))
-		{
-			$value = $this->quote_integer($value);
-		}
-		elseif (is_float($value))
-		{
-			$value = $this->quote_float($value);
-		}
-		elseif (is_array($value))
-		{
-			$value = $this->quote_array($value);
 		}
 		else
 		{
-			$value = $this->quote_string($value);
+			if (is_bool($value))
+				return $this->quote_boolean($value);
+
+			if (is_int($value))
+				return $this->quote_integer($value);
+
+			if (is_float($value))
+				return $this->quote_float($value);
+
+			if (is_array($value))
+				return $this->quote_array($value);
 		}
 
-		return $value;
+		return $this->quote_string($value);
 	}
 
 	/**
