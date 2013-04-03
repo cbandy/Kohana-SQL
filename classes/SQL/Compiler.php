@@ -181,6 +181,8 @@ class Compiler
 	/**
 	 * Quote a literal value for inclusion in an SQL statement.
 	 *
+	 * @uses quote_literal()
+	 *
 	 * @param   array   $value  Literal value to quote
 	 * @return  string  SQL fragment
 	 */
@@ -269,6 +271,8 @@ class Compiler
 
 	/**
 	 * Quote an expression's parameters for inclusion in an SQL statement.
+	 *
+	 * @uses quote()
 	 *
 	 * @param   Expression  $value  Expression to quote
 	 * @return  string  SQL fragment
@@ -369,6 +373,13 @@ class Compiler
 
 	/**
 	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @uses quote_array()
+	 * @uses quote_boolean()
+	 * @uses quote_datetime()
+	 * @uses quote_float()
+	 * @uses quote_integer()
+	 * @uses quote_string()
 	 *
 	 * @param   mixed   $value  Literal value to quote
 	 * @return  string  SQL fragment
