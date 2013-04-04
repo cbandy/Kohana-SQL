@@ -368,7 +368,7 @@ class Compiler
 	 */
 	public function quote_integer($value)
 	{
-		return (string) $value;
+		return (string) (int) $value;
 	}
 
 	/**
