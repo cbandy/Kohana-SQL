@@ -307,6 +307,7 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
+	 * @covers  SQL\Compiler::is_a_literal
 	 * @covers  SQL\Compiler::quote_literal
 	 *
 	 * @dataProvider    provider_quote_literal

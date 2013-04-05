@@ -55,6 +55,17 @@ class Compiler
 	}
 
 	/**
+	 * Whether or not a value is a [Literal], not a decendant of [Literal].
+	 *
+	 * @param   mixed   $value
+	 * @return  boolean
+	 */
+	protected function is_a_literal($value)
+	{
+		return (is_object($value) AND get_class($value) === 'SQL\Literal');
+	}
+
+	/**
 	 * Convert a generic [Expression] into a natively parameterized
 	 * [Statement]. Parameter names are driver-specific, but the default
 	 * implementation replaces all [Expression] and [Identifier] parameters
@@ -372,7 +383,8 @@ class Compiler
 	}
 
 	/**
-	 * Quote a literal value for inclusion in an SQL statement.
+	 * Quote a literal value for inclusion in an SQL statement. Dispatches to
+	 * other quote_* methods.
 	 *
 	 * @uses quote_array()
 	 * @uses quote_boolean()
@@ -386,7 +398,7 @@ class Compiler
 	 */
 	public function quote_literal($value)
 	{
-		while ($value instanceof Literal)
+		while ($this->is_a_literal($value))
 		{
 			$value = $value->value;
 		}
