@@ -38,6 +38,37 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($expected, $compiler->quote_array($value));
 	}
 
+	public function provider_quote_binary()
+	{
+		return array(
+			array(NULL, "X''"),
+			array('',   "X''"),
+
+			array("\x0", "X'00'"),
+			array("\200\0\350", "X'8000e8'"),
+			array('ascii', "X'6173636969'"),
+			array('0', "X'30'"),
+
+			array(new Literal\Binary("\x0"), "X'00'"),
+			array(new Literal\Binary('ascii'), "X'6173636969'"),
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_binary
+	 *
+	 * @dataProvider    provider_quote_binary
+	 *
+	 * @param   mixed   $value      Argument
+	 * @param   string  $expected
+	 */
+	public function test_quote_binary($value, $expected)
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame($expected, $compiler->quote_binary($value));
+	}
+
 	public function provider_quote_boolean()
 	{
 		return array(
@@ -241,6 +272,7 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 			array("single'quote", "'single''quote'"),
 			array('double"quote', "'double\"quote'"),
 
+			array(new Literal\Binary("\xDE\xAD\xBE\xEF"), "X'deadbeef'"),
 			array(
 				new \DateTime('1990-05-27 14:23:57.8-9'),
 				"'1990-05-27 14:23:57.800000-09:00'"
@@ -260,6 +292,10 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 			array(array('double"quote'), "ARRAY['double\"quote']"),
 
 			array(
+				array(new Literal\Binary("\xDE\xAD\xBE\xEF")),
+				"ARRAY[X'deadbeef']"
+			),
+			array(
 				array(new \DateTime('1990-05-27 14:23:57.8-9')),
 				"ARRAY['1990-05-27 14:23:57.800000-09:00']"
 			),
@@ -278,6 +314,10 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 			array(new Literal("single'quote"), "'single''quote'"),
 			array(new Literal('double"quote'), "'double\"quote'"),
 
+			array(
+				new Literal(new Literal\Binary("\xDE\xAD\xBE\xEF")),
+				"X'deadbeef'"
+			),
 			array(
 				new Literal(new \DateTime('1990-05-27 14:23:57.8-9')),
 				"'1990-05-27 14:23:57.800000-09:00'"
@@ -299,6 +339,10 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 			array(new Literal(array("single'quote")), "ARRAY['single''quote']"),
 			array(new Literal(array('double"quote')), "ARRAY['double\"quote']"),
 
+			array(
+				new Literal(array(new Literal\Binary("\xDE\xAD\xBE\xEF"))),
+				"ARRAY[X'deadbeef']"
+			),
 			array(
 				new Literal(array(new \DateTime('1990-05-27 14:23:57.8-9'))),
 				"ARRAY['1990-05-27 14:23:57.800000-09:00']"

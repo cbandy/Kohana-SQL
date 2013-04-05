@@ -207,6 +207,22 @@ class Compiler
 	/**
 	 * Quote a literal value for inclusion in an SQL statement.
 	 *
+	 * @param   string|Literal  $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_binary($value)
+	{
+		while ($value instanceof Literal)
+		{
+			$value = $value->value;
+		}
+
+		return "X'".current(unpack('H*', $value))."'";
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
 	 * @param   boolean $value  Literal value to quote
 	 * @return  string  SQL fragment
 	 */
@@ -387,6 +403,7 @@ class Compiler
 	 * other quote_* methods.
 	 *
 	 * @uses quote_array()
+	 * @uses quote_binary()
 	 * @uses quote_boolean()
 	 * @uses quote_datetime()
 	 * @uses quote_float()
@@ -410,6 +427,9 @@ class Compiler
 		{
 			if ($value instanceof \DateTime)
 				return $this->quote_datetime($value);
+
+			if ($value instanceof Literal\Binary)
+				return $this->quote_binary($value);
 		}
 		else
 		{
