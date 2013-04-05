@@ -10,8 +10,9 @@ env:
     - POSTGRESQL='{"dsn":"pgsql:dbname=kohana"}'
     - SQLITE='{"dsn":"sqlite:kohana.sqlite3"}'
   matrix:
-    - COMPOSER=
     - COMPOSER=composer.json
+    - ERROR_REPORTING=0
+    - ERROR_REPORTING=-1
 
 before_install:
   - mysql_tzinfo_to_sql /usr/share/zoneinfo 2> /dev/null | mysql -B mysql
@@ -30,7 +31,7 @@ before_script:
 script: >
   composer validate &&
   if [ "$COMPOSER" ] ; then
-    vendor/bin/phpunit --bootstrap vendor/autoload.php
+    vendor/bin/phpunit -d error_reporting=$ERROR_REPORTING --bootstrap vendor/autoload.php
   else
-    phpunit
+    phpunit -d error_reporting=$ERROR_REPORTING
   fi
