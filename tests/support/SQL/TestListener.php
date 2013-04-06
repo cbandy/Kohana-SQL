@@ -59,7 +59,9 @@ class TestListener implements \PHPUnit_Framework_TestListener
 
 	public function endTest(Test $test, $time)
 	{
-		if ($test->getTestResultObject()->wasSuccessful())
+		$result = $test->getTestResultObject();
+
+		if ($result AND $result->wasSuccessful())
 		{
 			$this->assertAssertions($test, $time);
 			$this->assertCoversAnnotation($test, $time);
