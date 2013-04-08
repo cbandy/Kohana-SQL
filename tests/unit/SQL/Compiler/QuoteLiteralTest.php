@@ -205,6 +205,75 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($expected, $compiler->quote_integer($value));
 	}
 
+	public function provider_quote_numeric()
+	{
+		return array(
+			array(NULL,  9, '0.000000000'),
+			array(FALSE, 0, '0'),
+			array(TRUE,  1, '1.0'),
+			array(0.777, 2, '0.78'),
+			array(355/113, 3, '3.142'),
+
+			array(12.345, NULL, '12.3450'),
+			array(12.345, FALSE, '12'),
+			array(12.345, TRUE, '12.3'),
+			array(12.345, 2.7, '12.35'),
+			array(12.345, 'a', '12'),
+
+			array(new Literal\Numeric(12.345, 1), NULL, '12.3'),
+			array(new Literal\Numeric(12.345, NULL), 1, '12.3'),
+			array(new Literal\Numeric(12.345, NULL), NULL, '12.3450'),
+
+			array(new Literal\Numeric(12.345, rand(5, 10)), 1, '12.3'),
+			array(new Literal\Numeric(12.345, rand(7, 18)), 5, '12.34500'),
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_numeric
+	 *
+	 * @dataProvider    provider_quote_numeric
+	 *
+	 * @param   mixed   $value      First argument
+	 * @param   integer $scale      Second argument
+	 * @param   string  $expected
+	 */
+	public function test_quote_numeric($value, $scale, $expected)
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame($expected, $compiler->quote_numeric($value, $scale));
+	}
+
+	public function provider_quote_numeric_scale_defaults_to_four()
+	{
+		return array(
+			array(NULL,     '0.0000'),
+			array(FALSE,    '0.0000'),
+			array(TRUE,     '1.0000'),
+			array(55,       '55.0000'),
+			array(0.77,     '0.7700'),
+			array(355/113,  '3.1416'),
+
+			array(new Literal\Numeric(12.345, NULL), '12.3450'),
+		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_numeric
+	 *
+	 * @dataProvider    provider_quote_numeric_scale_defaults_to_four
+	 *
+	 * @param   mixed   $value      Argument
+	 * @param   string  $expected
+	 */
+	public function test_quote_numeric_scale_defaults_to_four($value, $expected)
+	{
+		$compiler = new Compiler;
+
+		$this->assertSame($expected, $compiler->quote_numeric($value));
+	}
+
 	public function provider_quote_string()
 	{
 		return array(
@@ -273,6 +342,7 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 			array('double"quote', "'double\"quote'"),
 
 			array(new Literal\Binary("\xDE\xAD\xBE\xEF"), "X'deadbeef'"),
+			array(new Literal\Numeric(6.789, 2), '6.79'),
 			array(
 				new \DateTime('1990-05-27 14:23:57.8-9'),
 				"'1990-05-27 14:23:57.800000-09:00'"
@@ -295,6 +365,7 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 				array(new Literal\Binary("\xDE\xAD\xBE\xEF")),
 				"ARRAY[X'deadbeef']"
 			),
+			array(array(new Literal\Numeric(6.789, 2)), 'ARRAY[6.79]'),
 			array(
 				array(new \DateTime('1990-05-27 14:23:57.8-9')),
 				"ARRAY['1990-05-27 14:23:57.800000-09:00']"
@@ -318,6 +389,7 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 				new Literal(new Literal\Binary("\xDE\xAD\xBE\xEF")),
 				"X'deadbeef'"
 			),
+			array(new Literal(new Literal\Numeric(6.789, 2)), '6.79'),
 			array(
 				new Literal(new \DateTime('1990-05-27 14:23:57.8-9')),
 				"'1990-05-27 14:23:57.800000-09:00'"
@@ -342,6 +414,10 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 			array(
 				new Literal(array(new Literal\Binary("\xDE\xAD\xBE\xEF"))),
 				"ARRAY[X'deadbeef']"
+			),
+			array(
+				new Literal(array(new Literal\Numeric(6.789, 2))),
+				'ARRAY[6.79]'
 			),
 			array(
 				new Literal(array(new \DateTime('1990-05-27 14:23:57.8-9'))),

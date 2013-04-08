@@ -408,6 +408,7 @@ class Compiler
 	 * @uses quote_datetime()
 	 * @uses quote_float()
 	 * @uses quote_integer()
+	 * @uses quote_numeric()
 	 * @uses quote_string()
 	 *
 	 * @param   mixed   $value  Literal value to quote
@@ -430,6 +431,9 @@ class Compiler
 
 			if ($value instanceof Literal\Binary)
 				return $this->quote_binary($value);
+
+			if ($value instanceof Literal\Numeric)
+				return $this->quote_numeric($value);
 		}
 		else
 		{
@@ -447,6 +451,30 @@ class Compiler
 		}
 
 		return $this->quote_string($value);
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   float|Literal   $value  Literal value to quote
+	 * @param   integer         $scale  Number of digits in the fractional part
+	 * @return  string  SQL fragment
+	 */
+	public function quote_numeric($value, $scale = NULL)
+	{
+		if ($scale === NULL and $value instanceof Literal\Numeric)
+		{
+			$scale = $value->scale;
+		}
+
+		$scale = ($scale === NULL) ? 4 : (int) $scale;
+
+		while ($value instanceof Literal)
+		{
+			$value = $value->value;
+		}
+
+		return sprintf("%.{$scale}F", $value);
 	}
 
 	/**
