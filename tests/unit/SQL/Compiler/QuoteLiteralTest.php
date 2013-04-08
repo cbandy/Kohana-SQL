@@ -309,7 +309,7 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers  SQL\Compiler::quote_string
 	 */
-	public function test_quote_string_object()
+	public function test_quote_string_convertable_object()
 	{
 		$compiler = new Compiler;
 
@@ -322,6 +322,29 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame(
 			"'object__toString'", $compiler->quote_string($object)
 		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_string
+	 */
+	public function test_quote_string_intractable_object()
+	{
+		$compiler = new Compiler;
+
+		if (error_reporting() & E_WARNING)
+		{
+			$exception = (class_exists('Kohana', FALSE) && Kohana::$errors)
+				? 'ErrorException'
+				: 'PHPUnit_Framework_Error_Warning';
+
+			$this->setExpectedException($exception, 'object given', E_WARNING);
+
+			$compiler->quote_string(new \stdClass);
+		}
+		else
+		{
+			$this->assertSame("''", $compiler->quote_string(new \stdClass));
+		}
 	}
 
 	public function provider_quote_literal()
@@ -443,11 +466,9 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * Build the MockObject outside of a dataProvider.
-	 *
 	 * @covers  SQL\Compiler::quote_literal
 	 */
-	public function test_quote_literal_object()
+	public function test_quote_literal_string_convertable_object()
 	{
 		$compiler = new Compiler;
 
@@ -464,5 +485,28 @@ class Compiler_QuoteLiteralTest extends \PHPUnit_Framework_TestCase
 			"ARRAY['object__toString']",
 			$compiler->quote_literal(array($object))
 		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote_literal
+	 */
+	public function test_quote_literal_intractable_object()
+	{
+		$compiler = new Compiler;
+
+		if (error_reporting() & E_WARNING)
+		{
+			$exception = (class_exists('Kohana', FALSE) && Kohana::$errors)
+				? 'ErrorException'
+				: 'PHPUnit_Framework_Error_Warning';
+
+			$this->setExpectedException($exception, 'object given', E_WARNING);
+
+			$compiler->quote_literal(new \stdClass);
+		}
+		else
+		{
+			$this->assertSame("''", $compiler->quote_literal(new \stdClass));
+		}
 	}
 }

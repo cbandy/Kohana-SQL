@@ -398,11 +398,9 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * Build the MockObject outside of a dataProvider.
-	 *
 	 * @covers  SQL\Compiler::quote
 	 */
-	public function test_quote_object()
+	public function test_quote_string_convertable_object()
 	{
 		$compiler = new Compiler;
 
@@ -418,5 +416,28 @@ class CompilerTest extends \PHPUnit_Framework_TestCase
 			"'object__toString', 'object__toString'",
 			$compiler->quote(array($object, $object))
 		);
+	}
+
+	/**
+	 * @covers  SQL\Compiler::quote
+	 */
+	public function test_quote_intractable_object()
+	{
+		$compiler = new Compiler;
+
+		if (error_reporting() & E_WARNING)
+		{
+			$exception = (class_exists('Kohana', FALSE) && Kohana::$errors)
+				? 'ErrorException'
+				: 'PHPUnit_Framework_Error_Warning';
+
+			$this->setExpectedException($exception, 'object given', E_WARNING);
+
+			$compiler->quote(new \stdClass);
+		}
+		else
+		{
+			$this->assertSame("''", $compiler->quote(new \stdClass));
+		}
 	}
 }
