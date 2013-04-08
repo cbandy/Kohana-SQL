@@ -55,6 +55,17 @@ class Compiler
 	}
 
 	/**
+	 * Whether or not a value is a [Literal], not a decendant of [Literal].
+	 *
+	 * @param   mixed   $value
+	 * @return  boolean
+	 */
+	protected function is_a_literal($value)
+	{
+		return (is_object($value) AND get_class($value) === 'SQL\Literal');
+	}
+
+	/**
 	 * Convert a generic [Expression] into a natively parameterized
 	 * [Statement]. Parameter names are driver-specific, but the default
 	 * implementation replaces all [Expression] and [Identifier] parameters
@@ -179,6 +190,48 @@ class Compiler
 	}
 
 	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @uses quote_literal()
+	 *
+	 * @param   array   $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_array($value)
+	{
+		return 'ARRAY['
+			.implode(', ', array_map(array($this, 'quote_literal'), $value))
+			.']';
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   string|Literal  $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_binary($value)
+	{
+		while ($value instanceof Literal)
+		{
+			$value = $value->value;
+		}
+
+		return "X'".current(unpack('H*', $value))."'";
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   boolean $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_boolean($value)
+	{
+		return $value ? "'1'" : "'0'";
+	}
+
+	/**
 	 * Quote a column identifier for inclusion in an SQL statement. Adds the
 	 * table prefix unless the namespace is an [Identifier].
 	 *
@@ -233,7 +286,20 @@ class Compiler
 	}
 
 	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   DateTime    $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_datetime($value)
+	{
+		return $value->format("'Y-m-d H:i:s.uP'");
+	}
+
+	/**
 	 * Quote an expression's parameters for inclusion in an SQL statement.
+	 *
+	 * @uses quote()
 	 *
 	 * @param   Expression  $value  Expression to quote
 	 * @return  string  SQL fragment
@@ -260,6 +326,17 @@ class Compiler
 			},
 			$value
 		);
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   float   $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_float($value)
+	{
+		return sprintf('%E', $value);
 	}
 
 	/**
@@ -313,48 +390,102 @@ class Compiler
 	/**
 	 * Quote a literal value for inclusion in an SQL statement.
 	 *
+	 * @param   integer $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_integer($value)
+	{
+		return (string) (int) $value;
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement. Dispatches to
+	 * other quote_* methods.
+	 *
+	 * @uses quote_array()
+	 * @uses quote_binary()
+	 * @uses quote_boolean()
+	 * @uses quote_datetime()
+	 * @uses quote_float()
+	 * @uses quote_integer()
+	 * @uses quote_numeric()
+	 * @uses quote_string()
+	 *
 	 * @param   mixed   $value  Literal value to quote
 	 * @return  string  SQL fragment
 	 */
 	public function quote_literal($value)
 	{
-		while ($value instanceof Literal)
+		while ($this->is_a_literal($value))
 		{
 			$value = $value->value;
 		}
 
 		if ($value === NULL)
+			return 'NULL';
+
+		if (is_object($value))
 		{
-			$value = 'NULL';
-		}
-		elseif ($value === TRUE)
-		{
-			$value = "'1'";
-		}
-		elseif ($value === FALSE)
-		{
-			$value = "'0'";
-		}
-		elseif (is_int($value))
-		{
-			$value = (string) $value;
-		}
-		elseif (is_float($value))
-		{
-			$value = sprintf('%F', $value);
-		}
-		elseif (is_array($value))
-		{
-			$value = 'ARRAY['
-				.implode(', ', array_map(array($this, __FUNCTION__), $value))
-				.']';
+			if ($value instanceof \DateTime)
+				return $this->quote_datetime($value);
+
+			if ($value instanceof Literal\Binary)
+				return $this->quote_binary($value);
+
+			if ($value instanceof Literal\Numeric)
+				return $this->quote_numeric($value);
 		}
 		else
 		{
-			$value = "'$value'";
+			if (is_bool($value))
+				return $this->quote_boolean($value);
+
+			if (is_int($value))
+				return $this->quote_integer($value);
+
+			if (is_float($value))
+				return $this->quote_float($value);
+
+			if (is_array($value))
+				return $this->quote_array($value);
 		}
 
-		return $value;
+		return $this->quote_string($value);
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   float|Literal   $value  Literal value to quote
+	 * @param   integer         $scale  Number of digits in the fractional part
+	 * @return  string  SQL fragment
+	 */
+	public function quote_numeric($value, $scale = NULL)
+	{
+		if ($scale === NULL and $value instanceof Literal\Numeric)
+		{
+			$scale = $value->scale;
+		}
+
+		$scale = ($scale === NULL) ? 4 : (int) $scale;
+
+		while ($value instanceof Literal)
+		{
+			$value = $value->value;
+		}
+
+		return sprintf("%.{$scale}F", $value);
+	}
+
+	/**
+	 * Quote a literal value for inclusion in an SQL statement.
+	 *
+	 * @param   string  $value  Literal value to quote
+	 * @return  string  SQL fragment
+	 */
+	public function quote_string($value)
+	{
+		return "'".strtr($value, array("'" => "''"))."'";
 	}
 
 	/**

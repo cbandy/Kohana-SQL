@@ -27,7 +27,8 @@ class TestListener implements \PHPUnit_Framework_TestListener
 
 	protected function assertAssertions(TestCase $test, $time)
 	{
-		if ($test->getNumAssertions() <= 0)
+		if ($test->getStatus() === \PHPUnit_Runner_BaseTestRunner::STATUS_PASSED
+			&& $test->getNumAssertions() <= 0)
 		{
 			$test->getTestResultObject()->addFailure(
 				$test,
@@ -58,7 +59,9 @@ class TestListener implements \PHPUnit_Framework_TestListener
 
 	public function endTest(Test $test, $time)
 	{
-		if ($test->getTestResultObject()->wasSuccessful())
+		$result = $test->getTestResultObject();
+
+		if ($result AND $result->wasSuccessful())
 		{
 			$this->assertAssertions($test, $time);
 			$this->assertCoversAnnotation($test, $time);

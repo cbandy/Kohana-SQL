@@ -6,6 +6,7 @@ namespace SQL;
  * quoted.
  *
  * @package     SQL
+ * @category    Literals
  *
  * @author      Chris Bandy
  * @copyright   (c) 2012 Chris Bandy

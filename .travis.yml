@@ -1,8 +1,9 @@
 language: php
 
 php:
- - 5.3
- - 5.4
+  - 5.3
+  - 5.4
+  - 5.5
 
 env:
   global:
@@ -10,13 +11,20 @@ env:
     - POSTGRESQL='{"dsn":"pgsql:dbname=kohana"}'
     - SQLITE='{"dsn":"sqlite:kohana.sqlite3"}'
   matrix:
-    - COMPOSER=
     - COMPOSER=composer.json
+    - ERROR_REPORTING=0
+    - ERROR_REPORTING=-1
+
+matrix:
+  allow_failures:
+    - php: 5.5
 
 before_install:
+  - mysql_tzinfo_to_sql /usr/share/zoneinfo 2> /dev/null | mysql -B mysql
+  - sudo apt-get --no-install-recommends -qq install language-pack-fr && sudo locale-gen fr_FR
   - test -z "$COMPOSER" || composer install --dev
-  - test -n "$COMPOSER" || pear config-set auto_discover 1
-  - test -n "$COMPOSER" || pear install --nodeps pear.phpunit.de/DbUnit
+  - test -n "$COMPOSER" || pyrus set auto_discover 1
+  - test -n "$COMPOSER" || pyrus install phpunit/DbUnit
 
 before_script:
  - mysql -e 'CREATE DATABASE kohana'
@@ -28,7 +36,7 @@ before_script:
 script: >
   composer validate &&
   if [ "$COMPOSER" ] ; then
-    vendor/bin/phpunit --bootstrap vendor/autoload.php
+    vendor/bin/phpunit -d error_reporting=$ERROR_REPORTING --bootstrap vendor/autoload.php
   else
-    phpunit
+    phpunit -d error_reporting=$ERROR_REPORTING
   fi
