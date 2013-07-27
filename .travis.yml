@@ -15,10 +15,6 @@ env:
     - ERROR_REPORTING=0
     - ERROR_REPORTING=-1
 
-matrix:
-  allow_failures:
-    - php: 5.5
-
 before_install:
   - mysql_tzinfo_to_sql /usr/share/zoneinfo 2> /dev/null | mysql -B mysql
   - sudo apt-get --no-install-recommends -qq install language-pack-fr && sudo locale-gen fr_FR
