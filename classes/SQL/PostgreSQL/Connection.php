@@ -101,9 +101,26 @@ class Connection extends SQL_Connection
 	}
 
 	/**
+	 * @throws  ErrorException
+	 * @param   integer $number
+	 * @param   string  $string
+	 * @param   string  $file
+	 * @param   integer $line
+	 */
+	public static function handle_error($number, $string, $file, $line)
+	{
+		throw new \ErrorException($string, $number, 0, $file, $line);
+	}
+
+	/**
 	 * @var array   Configuration options
 	 */
 	protected $config;
+
+	/**
+	 * @var resource    Unique connection to the server
+	 */
+	protected $connection;
 
 	/**
 	 * @param   array   $config Configuration
@@ -128,10 +145,34 @@ class Connection extends SQL_Connection
 
 	public function connect()
 	{
+		set_error_handler(array($this, 'handle_error'));
+
+		try
+		{
+			// Raises E_WARNING upon error
+			$this->connection = empty($this->config['persistent'])
+				? pg_connect($this->config['info'], PGSQL_CONNECT_FORCE_NEW)
+				: pg_pconnect($this->config['info'], PGSQL_CONNECT_FORCE_NEW);
+		}
+		catch (Exception $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+
+		restore_error_handler();
+
+		if (isset($error))
+			throw $error;
 	}
 
 	public function disconnect()
 	{
+		if (is_resource($this->connection))
+		{
+			pg_close($this->connection);
+
+			$this->connection = NULL;
+		}
 	}
 
 	public function execute_command($statement)
