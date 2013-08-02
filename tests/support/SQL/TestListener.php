@@ -42,7 +42,9 @@ class TestListener implements \PHPUnit_Framework_TestListener
 	{
 		$annotations = $test->getAnnotations();
 
-		if (empty($annotations['method']['covers'])
+		if (empty($annotations['class']['covers'])
+			AND empty($annotations['class']['coversNothing'])
+			AND empty($annotations['method']['covers'])
 			AND empty($annotations['method']['coversNothing']))
 		{
 			$test->getTestResultObject()->addFailure(
