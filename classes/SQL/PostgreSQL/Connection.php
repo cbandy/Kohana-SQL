@@ -175,8 +175,121 @@ class Connection extends SQL_Connection
 		}
 	}
 
+	/**
+	 * Evaluate a result resource as though it were a command. Frees the
+	 * resource.
+	 *
+	 * @param   resource    $result Result resource
+	 * @return  integer Number of affected rows
+	 */
+	protected function evaluate_command($result)
+	{
+		$status = pg_result_status($result);
+
+		if ($status === PGSQL_COMMAND_OK)
+		{
+			$rows = pg_affected_rows($result);
+		}
+		elseif ($status === PGSQL_TUPLES_OK)
+		{
+			$rows = pg_num_rows($result);
+		}
+		else
+		{
+			if ($status === PGSQL_COPY_IN OR $status === PGSQL_COPY_OUT)
+			{
+				pg_end_copy($this->connection);
+			}
+
+			$rows = 0;
+		}
+
+		pg_free_result($result);
+
+		return $rows;
+	}
+
+	/**
+	 * Execute a statement after connecting.
+	 *
+	 * @throws  RuntimeException
+	 * @param   string  $statement  SQL statement
+	 * @return  resource    Result resource
+	 */
+	protected function execute($statement)
+	{
+		$this->connection OR $this->connect();
+
+		set_error_handler(array($this, 'handle_error'));
+
+		try
+		{
+			// Raises E_WARNING upon error
+			$result = pg_query($this->connection, $statement);
+		}
+		catch (Exception $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+
+		restore_error_handler();
+
+		if (isset($error))
+			throw $error;
+
+		return $result;
+	}
+
 	public function execute_command($statement)
 	{
+		if ( ! is_string($statement))
+		{
+			$parameters = $statement->parameters();
+			$statement = (string) $statement;
+		}
+
+		if (empty($statement))
+			return 0;
+
+		$result = empty($parameters)
+			? $this->execute($statement)
+			: $this->execute_parameters($statement, $parameters);
+
+		return $this->evaluate_command($result);
+	}
+
+	/**
+	 * Execute a parameterized statement after connecting.
+	 *
+	 * @throws  RuntimeException
+	 * @param   string  $statement  SQL statement
+	 * @param   array   $parameters Unquoted literal parameters
+	 * @return  resource    Result resource
+	 */
+	protected function execute_parameters($statement, $parameters)
+	{
+		$this->connection OR $this->connect();
+
+		set_error_handler(array($this, 'handle_error'));
+
+		try
+		{
+			// Raises E_WARNING upon error
+			$result = pg_query_params(
+				$this->connection, $statement, $parameters
+			);
+		}
+		catch (Exception $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+
+		restore_error_handler();
+
+		if (isset($error))
+			throw $error;
+
+		return $result;
 	}
 
 	public function execute_query($statement)
