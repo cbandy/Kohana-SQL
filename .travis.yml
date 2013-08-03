@@ -9,6 +9,7 @@ env:
   global:
     - MYSQL='{"dsn":"mysql:dbname=kohana","username":"root"}'
     - POSTGRESQL='{"dsn":"pgsql:dbname=kohana"}'
+    - POSTGRESQL_NATIVE='{"database":"kohana"}'
     - SQLITE='{"dsn":"sqlite:kohana.sqlite3"}'
   matrix:
     - COMPOSER=composer.json
