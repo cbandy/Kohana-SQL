@@ -210,6 +210,29 @@ class Connection extends SQL_Connection
 	}
 
 	/**
+	 * Evaluate a result resource as though it were a query. Frees the resource.
+	 *
+	 * @param   resource    $result Result resource
+	 * @return  Result  Result set or NULL
+	 */
+	protected function evaluate_query($result)
+	{
+		$status = pg_result_status($result);
+
+		if ($status === PGSQL_TUPLES_OK)
+			return new Result($result);
+
+		if ($status === PGSQL_COPY_IN OR $status === PGSQL_COPY_OUT)
+		{
+			pg_end_copy($this->connection);
+		}
+
+		pg_free_result($result);
+
+		return NULL;
+	}
+
+	/**
 	 * Execute a statement after connecting.
 	 *
 	 * @throws  RuntimeException
@@ -294,5 +317,19 @@ class Connection extends SQL_Connection
 
 	public function execute_query($statement)
 	{
+		if ( ! is_string($statement))
+		{
+			$parameters = $statement->parameters();
+			$statement = (string) $statement;
+		}
+
+		if (empty($statement))
+			return NULL;
+
+		$result = empty($parameters)
+			? $this->execute($statement)
+			: $this->execute_parameters($statement, $parameters);
+
+		return $this->evaluate_query($result);
 	}
 }
