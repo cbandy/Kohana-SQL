@@ -1,6 +1,7 @@
 <?php
 namespace SQL\MySQL;
 
+use Exception;
 use SQL\Connection as SQL_Connection;
 use SQL\RuntimeException;
 
@@ -76,6 +77,11 @@ class Connection extends SQL_Connection
 	protected $config;
 
 	/**
+	 * @var mysqli
+	 */
+	protected $connection;
+
+	/**
 	 * @param   array   $config Configuration
 	 * @param   string  $name   Connection name
 	 */
@@ -93,10 +99,50 @@ class Connection extends SQL_Connection
 
 	public function connect()
 	{
+		extract($this->config);
+
+		$connection = mysqli_init();
+
+		foreach ($options as $option => $value)
+		{
+			$connection->options($option, $value);
+		}
+
+		set_error_handler(function ($number, $string, $file, $line)
+		{
+			throw new \ErrorException($string, $number, 0, $file, $line);
+		});
+
+		try
+		{
+			// Raises E_WARNING upon some errors
+			$result = $connection->real_connect(
+				$hostname, $username, $password, $database, $port, $socket, $flags
+			);
+		}
+		catch (Exception $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+
+		restore_error_handler();
+
+		if (empty($result))
+		{
+			throw isset($error) ? $error
+				: new RuntimeException("Unable to connect: $this");
+		}
+
+		$this->connection = $connection;
 	}
 
 	public function disconnect()
 	{
+		if ($this->connection)
+		{
+			$this->connection->close();
+			$this->connection = NULL;
+		}
 	}
 
 	public function execute_command($statement)
