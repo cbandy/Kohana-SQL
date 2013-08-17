@@ -39,6 +39,9 @@ class Connection_CommandTest extends \PHPUnit_Framework_TestCase
 	public function provider_execute()
 	{
 		return array(
+			array('', 0),
+			array(new Statement(''), 0),
+
 			array(
 				'INSERT INTO '.$this->table.' (value) VALUES (5)',
 				1,

@@ -1,7 +1,6 @@
 <?php
 namespace SQL\PostgreSQL;
 
-use Exception;
 use SQL\Connection as SQL_Connection;
 use SQL\RuntimeException;
 
@@ -154,7 +153,7 @@ class Connection extends SQL_Connection
 				? pg_connect($this->config['info'], PGSQL_CONNECT_FORCE_NEW)
 				: pg_pconnect($this->config['info'], PGSQL_CONNECT_FORCE_NEW);
 		}
-		catch (Exception $e)
+		catch (\ErrorException $e)
 		{
 			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
 		}
@@ -250,7 +249,7 @@ class Connection extends SQL_Connection
 			// Raises E_WARNING upon error
 			$result = pg_query($this->connection, $statement);
 		}
-		catch (Exception $e)
+		catch (\ErrorException $e)
 		{
 			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
 		}
@@ -302,7 +301,7 @@ class Connection extends SQL_Connection
 				$this->connection, $statement, $parameters
 			);
 		}
-		catch (Exception $e)
+		catch (\ErrorException $e)
 		{
 			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
 		}
