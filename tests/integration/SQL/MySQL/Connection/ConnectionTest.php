@@ -39,6 +39,7 @@ class Connection_ConnectionTest extends \PHPUnit_Framework_TestCase
 
 	/**
 	 * @covers  SQL\MySQL\Connection::connect
+	 * @covers  SQL\MySQL\Connection::handle_error
 	 */
 	public function test_connect_raises_exception()
 	{
@@ -48,8 +49,7 @@ class Connection_ConnectionTest extends \PHPUnit_Framework_TestCase
 		$driver = new \mysqli_driver;
 
 		$this->setExpectedException(
-			'SQL\RuntimeException',
-			"Can't connect",
+			'SQL\RuntimeException', "Can't connect",
 			($driver->report_mode & MYSQLI_REPORT_STRICT) ? 2003 : E_WARNING
 		);
 

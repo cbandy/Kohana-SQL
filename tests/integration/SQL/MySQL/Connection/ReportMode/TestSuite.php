@@ -2,6 +2,7 @@
 namespace SQL\MySQL;
 
 require_once __DIR__.'/../ConnectionTest.php';
+require_once __DIR__.'/../CommandTest.php';
 
 /**
  * @package     SQL
@@ -15,6 +16,7 @@ abstract class Connection_ReportMode_TestSuite extends \PHPUnit_Framework_TestSu
 		$class = get_called_class();
 		$suite = new $class;
 		$suite->addTestSuite('SQL\MySQL\Connection_ConnectionTest');
+		$suite->addTestSuite('SQL\MySQL\Connection_CommandTest');
 
 		return $suite;
 	}

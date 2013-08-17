@@ -72,6 +72,18 @@ class Connection extends SQL_Connection
 	}
 
 	/**
+	 * @throws  ErrorException
+	 * @param   integer $number
+	 * @param   string  $string
+	 * @param   string  $file
+	 * @param   integer $line
+	 */
+	public static function handle_error($number, $string, $file, $line)
+	{
+		throw new \ErrorException($string, $number, 0, $file, $line);
+	}
+
+	/**
 	 * @var array
 	 */
 	protected $config;
@@ -108,10 +120,7 @@ class Connection extends SQL_Connection
 			$connection->options($option, $value);
 		}
 
-		set_error_handler(function ($number, $string, $file, $line)
-		{
-			throw new \ErrorException($string, $number, 0, $file, $line);
-		});
+		set_error_handler(array($this, 'handle_error'));
 
 		try
 		{
@@ -120,7 +129,11 @@ class Connection extends SQL_Connection
 				$hostname, $username, $password, $database, $port, $socket, $flags
 			);
 		}
-		catch (Exception $e)
+		catch (\ErrorException $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+		catch (\mysqli_sql_exception $e)
 		{
 			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
 		}
@@ -145,8 +158,148 @@ class Connection extends SQL_Connection
 		}
 	}
 
+	/**
+	 * Execute a statement after connecting.
+	 *
+	 * @throws  RuntimeException
+	 * @param   string  $statement  SQL statement
+	 * @return  void
+	 */
+	protected function execute($statement)
+	{
+		$this->connection OR $this->connect();
+
+		set_error_handler(array($this, 'handle_error'));
+
+		try
+		{
+			if ( ! $this->connection->real_query($statement))
+			{
+				$error = new RuntimeException(
+					$this->connection->error, $this->connection->errno
+				);
+			}
+		}
+		catch (\ErrorException $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+		catch (\mysqli_sql_exception $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+
+		restore_error_handler();
+
+		if (isset($error))
+			throw $error;
+	}
+
 	public function execute_command($statement)
 	{
+		if ( ! is_string($statement))
+		{
+			$parameters = $statement->parameters();
+			$statement = (string) $statement;
+		}
+
+		if (empty($statement))
+			return 0;
+
+		if (empty($parameters))
+		{
+			$this->execute($statement);
+
+			if ($this->connection->field_count)
+			{
+				# FIXME next line throws an index exception
+				$result = $this->connection->use_result();
+				$result->free();
+			}
+
+			return $this->connection->affected_rows;
+		}
+
+		$executed = $this->execute_parameters($statement, $parameters);
+
+		if ($executed->field_count)
+		{
+			$executed->free_result();
+		}
+
+		return $executed->affected_rows;
+	}
+
+	/**
+	 * Execute a parameterized statement after connecting.
+	 *
+	 * @throws  RuntimeException
+	 * @param   string  $statement  SQL statement
+	 * @param   array   $parameters Unquoted literal parameters
+	 * @return  mysqli_stmt Executed statement
+	 */
+	protected function execute_parameters($statement, $parameters)
+	{
+		$this->connection OR $this->connect();
+
+		set_error_handler(array($this, 'handle_error'));
+
+		try
+		{
+			if ( ! $prepared = $this->connection->prepare($statement))
+			{
+				$error = new RuntimeException(
+					$this->connection->error, $this->connection->errno
+				);
+			}
+		}
+		catch (\ErrorException $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+		catch (\mysqli_sql_exception $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+
+		restore_error_handler();
+
+		if (isset($error))
+			throw $error;
+
+		$arguments = array('types' => str_repeat('s', count($parameters)));
+
+		foreach ($parameters as $key => $value)
+		{
+			$arguments[] =& $parameters[$key];
+		}
+
+		call_user_func_array(array($prepared, 'bind_param'), $arguments);
+
+		set_error_handler(array($this, 'handle_error'));
+
+		try
+		{
+			if ( ! $prepared->execute())
+			{
+				$error = new RuntimeException($prepared->error, $prepared->errno);
+			}
+		}
+		catch (\ErrorException $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+		catch (\mysqli_sql_exception $e)
+		{
+			$error = new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
+
+		restore_error_handler();
+
+		if (isset($error))
+			throw $error;
+
+		return $prepared;
 	}
 
 	public function execute_query($statement)
