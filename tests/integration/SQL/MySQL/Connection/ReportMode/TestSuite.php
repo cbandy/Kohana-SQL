@@ -1,16 +1,19 @@
 <?php
 namespace SQL\MySQL;
 
+require_once __DIR__.'/../ConnectionTest.php';
+
 /**
  * @package     SQL
  * @subpackage  MySQL
  * @author      Chris Bandy
  */
-class Connection_ReportModeTest extends \PHPUnit_Framework_TestSuite
+abstract class Connection_ReportMode_TestSuite extends \PHPUnit_Framework_TestSuite
 {
 	public static function suite()
 	{
-		$suite = new Connection_ReportModeTest;
+		$class = get_called_class();
+		$suite = new $class;
 		$suite->addTestSuite('SQL\MySQL\Connection_ConnectionTest');
 
 		return $suite;
@@ -28,8 +31,6 @@ class Connection_ReportModeTest extends \PHPUnit_Framework_TestSuite
 
 		$driver = new \mysqli_driver;
 		$this->report_mode = $driver->report_mode;
-
-		mysqli_report(MYSQLI_REPORT_ALL);
 	}
 
 	public function teardown()
