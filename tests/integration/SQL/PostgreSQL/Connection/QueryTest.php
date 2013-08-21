@@ -82,6 +82,24 @@ class Connection_QueryTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
+	public function provider_execute_blank()
+	{
+		return array(
+			array(''),
+			array(new Statement('')),
+		);
+	}
+
+	/**
+	 * @dataProvider    provider_execute_blank
+	 *
+	 * @param   string|Statement    $statement  SQL statement
+	 */
+	public function test_execute_blank_returns_null($statement)
+	{
+		$this->assertNull($this->connection->execute_query($statement));
+	}
+
 	public function test_execute_with_command_returns_null()
 	{
 		$this->assertNull(
