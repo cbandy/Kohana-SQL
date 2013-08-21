@@ -46,12 +46,8 @@ class Connection_ConnectionTest extends \PHPUnit_Framework_TestCase
 		$connection = new Connection(array(
 			'hostname' => '127.0.0.1', 'port' => 1023
 		));
-		$driver = new \mysqli_driver;
 
-		$this->setExpectedException(
-			'SQL\RuntimeException', "Can't connect",
-			($driver->report_mode & MYSQLI_REPORT_STRICT) ? 2003 : E_WARNING
-		);
+		$this->setExpectedException('SQL\RuntimeException', 'onnect');
 
 		$connection->connect();
 	}
