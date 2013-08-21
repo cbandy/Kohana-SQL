@@ -44,7 +44,7 @@ class Connection_ConnectionTest extends \PHPUnit_Framework_TestCase
 	public function test_connect_raises_exception()
 	{
 		$connection = new Connection(array(
-			'hostname' => '127.0.0.1', 'port' => -1
+			'hostname' => '127.0.0.1', 'port' => 1023
 		));
 		$driver = new \mysqli_driver;
 
