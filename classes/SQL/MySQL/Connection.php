@@ -8,7 +8,9 @@ use SQL\RuntimeException;
 /**
  * SQL\Connection for [MySQL](http://www.mysql.com/)
  *
- * [!!] Requires MySQL >= 5.0.7
+ * [!!] Requires MySQL >= 5.0.7 and the [Native Driver][]
+ *
+ * [Native Driver]: http://www.php.net/manual/book.mysqlnd
  *
  *  Configuration | Type    | Description
  *  ------------- | ----    | -----------
@@ -304,5 +306,33 @@ class Connection extends SQL_Connection
 
 	public function execute_query($statement)
 	{
+		$this->connection OR $this->connect();
+
+		if ( ! is_string($statement))
+		{
+			$parameters = $statement->parameters();
+			$statement = (string) $statement;
+		}
+
+		if (empty($statement))
+			return NULL;
+
+		if (empty($parameters))
+		{
+			$this->execute($statement);
+
+			if ($this->connection->field_count)
+				# FIXME next line throws an index exception
+				return new Result($this->connection->use_result());
+
+			return NULL;
+		}
+
+		$executed = $this->execute_parameters($statement, $parameters);
+
+		if ($executed->field_count)
+			return new Result($executed->get_result());
+
+		return NULL;
 	}
 }
