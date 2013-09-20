@@ -83,6 +83,11 @@ class TimeZoneTest extends \PHPUnit_Framework_TestCase
 		}
 	}
 
+	public function teardown()
+	{
+		$this->connection->disconnect();
+	}
+
 	/**
 	 * @coversNothing
 	 */

@@ -29,6 +29,11 @@ class Connection_ConnectionTest extends \PHPUnit_Framework_TestCase
 		$this->connection = new Connection($config);
 	}
 
+	public function teardown()
+	{
+		$this->connection->disconnect();
+	}
+
 	/**
 	 * @covers  SQL\MySQL\Connection::connect
 	 */

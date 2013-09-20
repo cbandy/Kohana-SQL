@@ -38,6 +38,11 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 			->get();
 	}
 
+	public function teardown()
+	{
+		$this->connection->disconnect();
+	}
+
 	public function provider_insert_compound_select()
 	{
 		return array(

@@ -54,6 +54,11 @@ class Connection_ConstraintViolationTest extends \PHPUnit_Framework_TestCase
 		)->get();
 	}
 
+	public function teardown()
+	{
+		$this->connection->disconnect();
+	}
+
 	/**
 	 * @covers  SQL\MySQL\Connection::execute
 	 * @covers  SQL\MySQL\Connection::handle_error

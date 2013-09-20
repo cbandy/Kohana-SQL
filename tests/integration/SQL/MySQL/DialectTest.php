@@ -30,6 +30,11 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 		$this->connection = new Connection($config);
 	}
 
+	public function teardown()
+	{
+		$this->connection->disconnect();
+	}
+
 	public function provider_create_table_column_definition()
 	{
 		return array(

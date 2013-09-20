@@ -56,6 +56,11 @@ class DialectTest extends \PHPUnit_Framework_TestCase
 			->get();
 	}
 
+	public function teardown()
+	{
+		$this->connection->disconnect();
+	}
+
 	/**
 	 * A common table expression cannot be used inside a subquery.
 	 *

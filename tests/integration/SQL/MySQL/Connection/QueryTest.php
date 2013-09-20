@@ -55,6 +55,11 @@ class Connection_QueryTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
+	public function teardown()
+	{
+		$this->connection->disconnect();
+	}
+
 	public function provider_execute()
 	{
 		return array(

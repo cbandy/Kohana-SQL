@@ -29,6 +29,11 @@ abstract class Connection_TestCase extends \PHPUnit_Framework_TestCase
 	 */
 	abstract protected function expect_syntax_error_exception();
 
+	public function teardown()
+	{
+		$this->connection->disconnect();
+	}
+
 	public function provider_execute_command()
 	{
 		return array(
