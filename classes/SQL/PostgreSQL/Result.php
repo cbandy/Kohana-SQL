@@ -2,6 +2,7 @@
 namespace SQL\PostgreSQL;
 
 use SQL\Result_Seekable;
+use SQL\Result\Types;
 
 /**
  * Seekable result set for a PostgreSQL resource.
@@ -16,7 +17,7 @@ use SQL\Result_Seekable;
  *
  * @link http://php.net/manual/pgsql.resources
  */
-class Result extends Result_Seekable
+class Result extends Result_Seekable implements Types
 {
 	/**
 	 * @var resource    From pg_query() or pg_get_result()
@@ -93,5 +94,13 @@ class Result extends Result_Seekable
 		return pg_fetch_all_columns(
 			$this->result, pg_field_num($this->result, $value)
 		);
+	}
+
+	public function type($name = NULL)
+	{
+		if ($name === NULL OR ($name = pg_field_num($this->result, $name)) >= 0)
+			return pg_field_type($this->result, $name);
+
+		return NULL;
 	}
 }
