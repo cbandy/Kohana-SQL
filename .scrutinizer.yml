@@ -1,0 +1,6 @@
+filter:
+  paths: [classes/SQL/*]
+
+tools:
+  external_code_coverage: true
+  php_mess_detector: true
