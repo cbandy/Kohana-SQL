@@ -3,4 +3,10 @@ filter:
 
 tools:
   external_code_coverage: true
+  php_analyzer:
+    enabled: true
+    config:
+      parameter_reference_check: { enabled: true }
+      simplify_boolean_return: { enabled: true }
+      verify_php_doc_comments: { enabled: true }
   php_mess_detector: true
